@@ -21,7 +21,7 @@ import { promiseToSnackbar } from "src/utils"
 
 export function CreateUser() {
   const { enqueueSnackbar } = useSnackbar()
-  const [email, setEmail] = React.useState("user@user.com")
+  const [email, setEmail] = React.useState("")
   const [accessLevel, setAccessLevel] = React.useState("")
   const user = useSelector(function ({ user: { profile } }) {
     return profile
@@ -82,6 +82,8 @@ export function CreateUser() {
                   onChange={function (ev) {
                     setEmail(ev.target.value)
                   }}
+                  placeholder={"user@mail.com"}
+                  autoFocus
                   required
                 />
               </FormControl>
@@ -89,7 +91,7 @@ export function CreateUser() {
                 <>
                   <FormControl key="access_level" fullWidth>
                     <InputLabel id="access_level_label">
-                      Access level
+                      Access Level
                     </InputLabel>
                     <Select
                       value={accessLevel}
