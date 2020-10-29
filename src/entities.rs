@@ -37,7 +37,7 @@ pub struct BookGet {
 
 #[derive(Debug)]
 pub struct BookGetMessage {
-  pub channel: crossbeam_channel::Sender<Book>,
+  pub channel: crossbeam_channel::Sender<Option<Book>>,
   pub payload: BookGet,
   pub app: &'static App,
 }
