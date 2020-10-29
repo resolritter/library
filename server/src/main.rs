@@ -116,7 +116,7 @@ async fn main() {
     );
     let db_url = cli_args
         .value_of("db_url")
-        .unwrap_or(default_db_url.as_str());
+        .unwrap_or_else(|| default_db_url.as_str());
     let is_resetting_and_seeding = cli_args.is_present("reset_before_run");
 
     // Wait until the database comes up - especially useful during testing
