@@ -6,6 +6,7 @@ mod resources;
 
 use crate::messages::{ActorGroups, BOOK};
 use bastion::prelude::*;
+use clap::{App, Arg};
 use entities::{Global, ServerState};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
@@ -27,9 +28,31 @@ macro_rules! init_actors {
 // TODO turn those environment variables into command line arguments
 #[async_std::main]
 async fn main() {
+    let cli_args = App::new("library")
+        .arg(
+            Arg::new("log_format")
+                .long("log-format")
+                .about("[test]")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("reset_before_run")
+                .long("reset-before-run")
+                .about("Resets the database before running the app")
+                .takes_value(false),
+        )
+        .get_matches();
+
     // Initialize the logger
-    let mut logging_conf =
-        flexi_logger::Logger::with_env_or_str("library=debug").format(flexi_logger::opt_format);
+    let mut logging_conf = flexi_logger::Logger::with_env_or_str("library=debug");
+    logging_conf = if let Some(log_format) = cli_args.value_of("log_format") {
+        match log_format {
+            "test" => logging_conf.format(crate::logging::test_format),
+            _ => panic!("Invalid logging format {}", log_format),
+        }
+    } else {
+        logging_conf.format(flexi_logger::opt_format)
+    };
     if let Ok(log_dir) = std::env::var("APP_LOG_DIR") {
         logging_conf = logging_conf
             .log_to_file()
@@ -40,47 +63,41 @@ async fn main() {
 
     // Initialize the database environment
     let db_url = std::env::var("DB_URL").unwrap();
-    let is_reset_and_seed = std::env::var("RESET_AND_SEED").is_ok();
+    println!("DB: {}", &db_url);
+    let is_resetting_and_seeding = cli_args.is_present("reset_before_run");
 
-    let limit = 5;
+    // Wait until the database comes up - especially useful during testing
+    let try_limit = 3;
     let seconds_delay = 5;
     let retry_delay = std::time::Duration::from_secs(seconds_delay);
-    for try_count in 0..=limit {
-        // Set up the database
-        {
-            use sqlx::any::Any;
-            use sqlx::migrate::MigrateDatabase;
-            if is_reset_and_seed {
-                if let Ok(exists) = Any::database_exists(&db_url).await {
-                    if exists {
-                        Any::drop_database(&db_url).await.unwrap();
-                        Any::create_database(&db_url).await.unwrap();
-                        break;
-                    }
-                } else {
-                    if try_count == limit {
-                        panic!("Failed to connect in {} seconds", limit * seconds_delay);
-                    } else {
-                        thread::sleep(retry_delay);
-                    }
+    for try_count in 0..=try_limit {
+        use sqlx::any::Any;
+        use sqlx::migrate::MigrateDatabase;
+
+        if is_resetting_and_seeding {
+            if let Ok(exists) = Any::database_exists(&db_url).await {
+                if exists {
+                    Any::drop_database(&db_url).await.unwrap();
                 }
-            } else {
-                if let Ok(exists) = Any::database_exists(&db_url).await {
-                    if !exists {
-                        Any::create_database(&db_url).await.unwrap();
-                        break;
-                    }
-                } else {
-                    if try_count == limit {
-                        panic!("Failed to connect in {} seconds", limit * seconds_delay);
-                    } else {
-                        thread::sleep(retry_delay);
-                    }
+                Any::create_database(&db_url).await.unwrap();
+                break;
+            }
+        } else {
+            if let Ok(exists) = Any::database_exists(&db_url).await {
+                if !exists {
+                    Any::create_database(&db_url).await.unwrap();
+                    break;
                 }
             }
         }
+        if try_count == try_limit {
+            panic!("Failed to connect in {} seconds", try_limit * seconds_delay);
+        } else {
+            thread::sleep(retry_delay);
+        }
     }
 
+    // Initialize the database
     let db_pool_ptr: &'static PgPool = &*Box::leak(Box::new(
         PgPoolOptions::new()
             .connect_timeout(std::time::Duration::from_secs(40))
@@ -89,7 +106,7 @@ async fn main() {
             .unwrap(),
     ));
     let db_pool: &'static PgPool = &*Box::leak(Box::new(db_pool_ptr));
-    setup_database(&db_url, db_pool, is_reset_and_seed).await;
+    setup_database(&db_url, db_pool, is_resetting_and_seeding).await;
 
     // Initialize the global static environment
     GLOBAL
@@ -138,7 +155,7 @@ fn root(children: Children) -> Children {
         })
 }
 
-async fn setup_database(db_url: &str, pool: &PgPool, is_reset_and_seed: bool) {
+async fn setup_database(db_url: &str, pool: &PgPool, is_seeding: bool) {
     use refinery_core::postgres::{Client, NoTls};
     let mut client = Client::connect(db_url, NoTls).unwrap();
 
@@ -151,7 +168,7 @@ async fn setup_database(db_url: &str, pool: &PgPool, is_reset_and_seed: bool) {
         );
     }
 
-    if is_reset_and_seed {
+    if is_seeding {
         resources::book::seed(pool).await;
     }
 }

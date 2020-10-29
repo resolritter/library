@@ -5,8 +5,6 @@ services:
     image: 'docker.io/bitnami/postgresql:11-debian-10'
     ports:
       - '${APP_DB_PORT}:5432'
-    volumes:
-      - '${APP_DB_DIR}:/bitnami/postgresql'
     environment:
       - 'ALLOW_EMPTY_PASSWORD=yes'
       - 'POSTGRESQL_USERNAME=${USER}'

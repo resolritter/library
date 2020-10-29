@@ -1,0 +1,5 @@
+---
+source: tests/book.rs
+expression: get.body_string().await.unwrap()
+---
+{"data":{"id":2,"title":"Rapunzel"}}

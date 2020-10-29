@@ -1,0 +1,15 @@
+[package]
+name = "test_utils"
+version = "0.1.0"
+authors = ["resolritter <resolritter@users.noreply.github.com>"]
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+path-clean = "0.1"
+tempdir = "0.3"
+stdext = "0.2"
+async-process = "1.0"
+futures-lite = "1.11"
