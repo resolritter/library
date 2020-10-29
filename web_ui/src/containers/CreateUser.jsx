@@ -10,6 +10,7 @@ import {
   Typography,
   withStyles,
 } from "@material-ui/core"
+import { useSnackbar } from "notistack"
 import React from "react"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes, userUIAccessLevels } from "src/constants"
@@ -35,6 +36,7 @@ const CreateUserButtonRow = withStyles({
 })(FormControl)
 
 export function CreateUser() {
+  const { enqueueSnackbar } = useSnackbar()
   const createUserForm = React.useRef()
   const [email, setEmail] = React.useState("user@user.com")
   const [accessLevel, setAccessLevel] = React.useState("")
@@ -55,7 +57,7 @@ export function CreateUser() {
                 setIsLoading(true)
                 const result = await createUser({ email, accessLevel })
                 if (result instanceof Error) {
-                  console.log(result.message)
+                  enqueueSnackbar(result.message, { variant: "error" })
                   setIsLoading(false)
                 } else {
                   history.push(routes.login())
@@ -67,7 +69,6 @@ export function CreateUser() {
                 <Input
                   type="email"
                   name="email"
-                  id="email"
                   value={email}
                   onChange={function (ev) {
                     setEmail(ev.target.value)
@@ -83,7 +84,6 @@ export function CreateUser() {
                     setAccessLevel(ev.target.value)
                   }}
                   labelId="access_level_label"
-                  id="access_level"
                 >
                   <MenuItem value={""}>None</MenuItem>
                   <MenuItem value={userUIAccessLevels.librarian}>
