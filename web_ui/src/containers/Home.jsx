@@ -107,7 +107,11 @@ export function Home() {
                 onClick={function () {
                   handleWithSnackbar(borrowBook(user, { title }), reloadBooks)
                 }}
-                style={{ opacity: isBorrowBookShown ? 1 : 0 }}
+                style={
+                  isBorrowBookShown
+                    ? undefined
+                    : { opacity: 0, pointerEvents: "none", cursor: "none" }
+                }
               >
                 Borrow
               </Button>
@@ -123,9 +127,11 @@ export function Home() {
                     reloadBooks,
                   )
                 }}
-                style={{
-                  opacity: isCancelBorrowBookShown ? 1 : 0,
-                }}
+                style={
+                  isCancelBorrowBookShown
+                    ? undefined
+                    : { opacity: 0, pointerEvents: "none", cursor: "none" }
+                }
               >
                 Cancel Borrow
               </Button>
