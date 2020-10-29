@@ -14,6 +14,8 @@ export const dictionaryOf = function (array) {
   return zipObject(array, array)
 }
 
+export const loadingStates = dictionaryOf(["notStarted", "loading", "loaded"])
+
 export const setCssVariable = function (name, value) {
   document.documentElement.style.setProperty(newCssVariableName(name), value)
 }

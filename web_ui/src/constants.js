@@ -17,6 +17,9 @@ export const apiEndpoints = {
   createUser: function () {
     return `${apiURL}/user`
   },
+  books: function () {
+    return `${apiURL}/books`
+  },
 }
 
 export const routes = {
