@@ -2,5 +2,9 @@
 
 members = [
   "server",
-  "entities"
+  "entities",
+  "test_utils",
+  "actor_response_handler",
+  "endpoint_actor",
+  "resource_messaging"
 ]

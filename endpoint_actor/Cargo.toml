@@ -11,4 +11,3 @@ quote = "1.0.7"
 
 [lib]
 proc-macro = true
-path = "lib.rs"

@@ -111,7 +111,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
         pub enum #actor_msg {
             #(#msg_variants),*
         }
-        
+
         pub static #actor_lock: once_cell::sync::OnceCell<&'static parking_lot::RwLock<Option<crossbeam_channel::Sender<#actor_msg>>>> = once_cell::sync::OnceCell::new();
     })
     .into()

@@ -1,14 +1,13 @@
 [package]
-name = "actor_response_handler"
+name = "resource_messaging"
 version = "0.1.0"
 authors = ["resolritter <resolritter@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-syn = { version = "1.0.44", features = ["full", "parsing", "extra-traits", "visit"] }
+syn = { version = "1.0.44", features = ["full", "parsing", "extra-traits"] }
 proc-macro2 = "1.0.24"
 quote = "1.0.7"
 
 [lib]
 proc-macro = true
-path = "lib.rs"

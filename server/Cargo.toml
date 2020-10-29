@@ -25,9 +25,9 @@ parking_lot = "0.11"
 
 strum = "0.19"
 strum_macros = "0.19"
-endpoint_actor = { path = "../macros/endpoint_actor" }
-actor_response_handler = { path = "../macros/actor_response_handler" }
-resource_messaging = { path = "../macros/resource_messaging" }
+endpoint_actor = { path = "../endpoint_actor" }
+actor_response_handler = { path = "../actor_response_handler" }
+resource_messaging = { path = "../resource_messaging" }
 entities = { path = "../entities" }
 
 [dev-dependencies]
