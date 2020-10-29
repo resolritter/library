@@ -33,7 +33,7 @@ pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
         .watch(&signal_file, RecursiveMode::NonRecursive)
         .unwrap();
 
-    let process = Command::new(executable_path().unwrap())
+    let process = Command::new(executable_path())
         .arg("--listen")
         .arg(server_addr_arg)
         .arg("--instance")

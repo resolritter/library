@@ -15,11 +15,10 @@ pub fn absolute_path(path: impl AsRef<Path>) -> std::io::Result<PathBuf> {
     Ok(absolute_path)
 }
 
-pub fn root_path() -> std::io::Result<PathBuf> {
-    absolute_path(format!("{}/../../..", file!()))
+pub fn root_path() -> PathBuf {
+    absolute_path(format!("{}/../../..", file!())).unwrap()
 }
 
-pub fn executable_path() -> std::io::Result<String> {
-    let path = root_path()?;
-    Ok(format!("{}", path.join("run.sh").display()))
+pub fn executable_path() -> String {
+    format!("{}", root_path().join("run.sh").display())
 }

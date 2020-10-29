@@ -1,14 +1,20 @@
-use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
+use crate::path::executable_path;
+use std::process::{Command, Stdio};
 
 pub type Port = u16;
 
 pub fn get_free_port() -> Port {
-    loop {
-        let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
-        if let Ok(listener) = TcpListener::bind(addr) {
-            if let Ok(bind) = listener.local_addr() {
-                return bind.port();
-            }
-        }
-    }
+    String::from_utf8_lossy(
+        &Command::new(executable_path())
+            .arg("get_port")
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap()
+            .wait_with_output()
+            .unwrap()
+            .stdout,
+    )
+    .trim()
+    .parse::<u16>()
+    .unwrap()
 }
