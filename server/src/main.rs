@@ -1,13 +1,16 @@
+mod auth;
 mod logging;
 mod messages;
 mod migrations;
 mod resources;
 mod state;
 
+use crate::auth::auth_middleware;
 use crate::messages::ActorGroups;
 use crate::state::{Global, ServerState};
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
+use entities::{book_route, lease_route};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -193,14 +196,17 @@ fn root(
             );
 
             server
-                .at(format!("/{}/:title", entities::book::BOOK_ROUTE).as_str())
+                .at(format!(book_route!(), ":title").as_str())
                 .get(resources::book::get);
             server
-                .at(format!("/{}/:title/lease/:lease_id", entities::book::BOOK_ROUTE).as_str())
+                .at(format!(
+                    concat!(book_route!(), lease_route!(),),
+                    ":title", ":lease_id"
+                )
+                .as_str())
+                .with(auth_middleware)
                 .patch(resources::book::lease_book);
 
-            // TODO add password to user login
-            // TODO implement middleware for access levels
             server
                 .at(entities::user::USER_ROUTE)
                 .post(resources::user::post);

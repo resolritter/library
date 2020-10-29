@@ -22,9 +22,10 @@ structout::generate!(
 structout::generate!(
     pub <> {
         pub email: LeaseBookId,
-        pub access_level: i32
+        pub access_level: i32,
+        pub access_token: String
     } => {
         UserPublic => [attr(#[derive(Serialize, Deserialize, Debug)])],
-        UserCreationPayload => [attr(#[derive(Serialize, Deserialize, Debug)])],
+        UserCreationPayload => [attr(#[derive(Serialize, Deserialize, Debug)]), omit(access_token)],
     }
 );

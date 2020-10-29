@@ -3,6 +3,7 @@ use surf::{self, http::mime::JSON, StatusCode};
 
 pub const USER_ROUTE: &str = "user";
 
+#[inline(always)]
 pub async fn create(server_addr: &str, payload: &UserCreationPayload) -> (String, UserPublic) {
     let mut response = surf::post(format!("{}/{}", server_addr, USER_ROUTE))
         .body(serde_json::json!(payload))

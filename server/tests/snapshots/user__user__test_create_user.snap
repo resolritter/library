@@ -2,4 +2,4 @@
 source: server/tests/user.rs
 expression: user_str
 ---
-{"access_level":0,"email":"user@user.com"}
+{"access_level":0,"access_token":"user@user.com","email":"user@user.com"}
