@@ -6,7 +6,7 @@ mod resources;
 
 use crate::messages::{ActorGroups, BOOK};
 use bastion::prelude::*;
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 use entities::{Global, ServerState};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
@@ -25,14 +25,39 @@ macro_rules! init_actors {
     };
 }
 
+macro_rules! staticfy {
+    ($e: expr $(,)?) => {
+        &*Box::leak(Box::new($e))
+    };
+}
+
 // TODO turn those environment variables into command line arguments
 #[async_std::main]
 async fn main() {
-    let cli_args = App::new("library")
+    let cli_args: &'static ArgMatches = staticfy!(App::new("library")
+        .arg(
+            Arg::new("db_url")
+                .long("db-url")
+                .about("The connection string for the PostgreSQL database")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::new("log_dir")
+                .long("log-dir")
+                .about("The directory where logs will be written to")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("listen")
+                .long("listen")
+                .about("Address to bind to")
+                .takes_value(true),
+        )
         .arg(
             Arg::new("log_format")
                 .long("log-format")
-                .about("{test}")
+                .about("Currently only the 'test' format")
                 .takes_value(true),
         )
         .arg(
@@ -47,7 +72,7 @@ async fn main() {
                 .about("Resets the database before running the app")
                 .takes_value(false),
         )
-        .get_matches();
+        .get_matches());
 
     // Initialize the logger
     let mut logging_conf = flexi_logger::Logger::with_env_or_str("library=debug");
@@ -59,7 +84,7 @@ async fn main() {
     } else {
         logging_conf.format(flexi_logger::opt_format)
     };
-    if let Ok(log_dir) = std::env::var("APP_LOG_DIR") {
+    if let Some(log_dir) = cli_args.value_of("log_dir") {
         logging_conf = logging_conf
             .log_to_file()
             .directory(log_dir)
@@ -68,8 +93,7 @@ async fn main() {
     logging_conf.start().unwrap();
 
     // Initialize the database environment
-    let db_url = std::env::var("DB_URL").unwrap();
-    println!("DB: {}", &db_url);
+    let db_url = cli_args.value_of("db_url").unwrap();
     let is_resetting_and_seeding = cli_args.is_present("reset_before_run");
 
     // Wait until the database comes up - especially useful during testing
@@ -88,30 +112,30 @@ async fn main() {
                 Any::create_database(&db_url).await.unwrap();
                 break;
             }
-        } else {
-            if let Ok(exists) = Any::database_exists(&db_url).await {
-                if !exists {
-                    Any::create_database(&db_url).await.unwrap();
-                    break;
-                }
+        } else if let Ok(exists) = Any::database_exists(&db_url).await {
+            if !exists {
+                Any::create_database(&db_url).await.unwrap();
             }
+            break;
         }
         if try_count == try_limit {
-            panic!("Failed to connect in {} seconds", try_limit * seconds_delay);
+            panic!(
+                "Failed to connect within {} seconds ({} tries)",
+                try_limit * seconds_delay,
+                try_limit
+            );
         } else {
             thread::sleep(retry_delay);
         }
     }
 
     // Initialize the database
-    let db_pool_ptr: &'static PgPool = &*Box::leak(Box::new(
-        PgPoolOptions::new()
-            .connect_timeout(std::time::Duration::from_secs(40))
-            .connect(&db_url)
-            .await
-            .unwrap(),
-    ));
-    let db_pool: &'static PgPool = &*Box::leak(Box::new(db_pool_ptr));
+    let db_pool_ptr: &'static PgPool = staticfy!(PgPoolOptions::new()
+        .connect_timeout(std::time::Duration::from_secs(40))
+        .connect(&db_url)
+        .await
+        .unwrap(),);
+    let db_pool: &'static PgPool = staticfy!(db_pool_ptr);
     setup_database(&db_url, db_pool, is_resetting_and_seeding).await;
 
     // Initialize the global static environment
@@ -123,9 +147,11 @@ async fn main() {
     init_actors!(BOOK);
 
     // Initialize the supervision tree
+    let listen_addr: &'static str =
+        &*staticfy!(cli_args.value_of("listen").unwrap_or("127.0.0.1:8080"),);
     Bastion::init();
     Bastion::supervisor(|sup| sup.children(resources::book::actor))
-        .and_then(|_| Bastion::supervisor(|sup| sup.children(root)))
+        .and_then(|_| Bastion::supervisor(|sup| sup.children(|child| root(child, listen_addr))))
         .unwrap();
     Bastion::start();
     if let Some(signal_file) = cli_args.value_of("signal_file") {
@@ -134,7 +160,7 @@ async fn main() {
     Bastion::block_until_stopped();
 }
 
-fn root(children: Children) -> Children {
+fn root(children: Children, listen_addr: &'static str) -> Children {
     children
         .with_name(ActorGroups::Input.as_ref())
         .with_exec(move |_| async move {
@@ -154,8 +180,6 @@ fn root(children: Children) -> Children {
 
             server.at("/book/:title").get(resources::book::get);
 
-            let listen_addr =
-                std::env::var("APP_LISTEN_ADDR").unwrap_or("127.0.0.1:8080".to_string());
             println!("Web server listening at {}", listen_addr);
             server.listen(listen_addr).await.unwrap();
 
