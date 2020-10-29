@@ -2,12 +2,12 @@ mod entities;
 mod messages;
 mod resources;
 
-use crate::messages::ActorGroups;
+use crate::messages::{ActorGroups, BOOK};
 use bastion::prelude::*;
-use entities::{App, Config, ServerState};
+use entities::{App, BookGetMessage, Config, ServerState};
 use once_cell::sync::OnceCell;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use tide::http::headers::HeaderValue;
 use tide::security::CorsMiddleware;
@@ -15,10 +15,18 @@ use tide::security::Origin;
 use tide::Server;
 
 fn main() {
+  let child_ptr: &'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>> =
+    &*Box::leak(Box::new(Mutex::new(None)));
+  let child: &'static Arc<&'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>>> =
+    &*Box::leak(Box::new(Arc::new(child_ptr)));
+  unsafe {
+    BOOK.set(child).unwrap();
+  }
+
   Bastion::init();
 
-  Bastion::supervisor(|sup| sup.children(root))
-    .and_then(|_| Bastion::supervisor(|sup| sup.children(resources::book::actor)))
+  Bastion::supervisor(|sup| sup.children(resources::book::actor))
+    .and_then(|_| Bastion::supervisor(|sup| sup.children(root)))
     .expect("Couldn't create supervisor chain.");
 
   Bastion::start();
@@ -29,9 +37,13 @@ static mut APP: OnceCell<&'static Arc<&'static App>> = OnceCell::new();
 static CONFIG: OnceCell<Config> = OnceCell::new();
 
 fn initialize_config_once() -> &'static Config {
-  let _ = CONFIG.set(Config {
-    db_url: std::env::var("DB_URL").unwrap(),
-  });
+  if CONFIG.get().is_none() {
+    CONFIG
+      .set(Config {
+        db_url: std::env::var("DB_URL").unwrap(),
+      })
+      .unwrap();
+  }
   CONFIG.get().unwrap()
 }
 

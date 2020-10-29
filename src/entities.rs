@@ -1,10 +1,8 @@
-use bastion::prelude::BastionContext;
-
+use bastion::prelude::{BastionContext};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[derive(Clone)]
 pub struct App {
   pub db_pool: &'static Arc<&'static PgPool>,
   pub bastion: &'static Arc<&'static BastionContext>,
@@ -15,6 +13,7 @@ impl std::fmt::Debug for App {
   }
 }
 
+#[derive(Debug)]
 pub struct Config {
   pub db_url: String,
 }
