@@ -4,75 +4,53 @@ mod resources;
 
 use crate::messages::{ActorGroups, BOOK};
 use bastion::prelude::*;
-use entities::{App, BookGetMessage, Config, ServerState};
+use entities::{BookGetMessage, Global, ServerState};
 use once_cell::sync::OnceCell;
+use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::sync::{Arc, Mutex};
 
 use tide::http::headers::HeaderValue;
 use tide::security::CorsMiddleware;
 use tide::security::Origin;
 use tide::Server;
 
-fn main() {
-    let child_ptr: &'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>> =
-        &*Box::leak(Box::new(Mutex::new(None)));
-    let child: &'static Arc<&'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>>> =
-        &*Box::leak(Box::new(Arc::new(child_ptr)));
+static GLOBAL: OnceCell<&'static Global> = OnceCell::new();
+
+#[async_std::main]
+async fn main() {
+    // Initialize the global, read-only, static environment
+    let db_url: &'static str = &*Box::leak(Box::new(std::env::var("DB_URL").unwrap()));
+    let db_pool_ptr: &'static PgPool = Box::leak(Box::new(
+        PgPoolOptions::new().connect(&db_url).await.unwrap(),
+    ));
+    let db_pool: &'static PgPool = &*Box::leak(Box::new(db_pool_ptr));
+    GLOBAL
+        .set(&*Box::leak(Box::new(Global { db_pool, db_url })))
+        .unwrap();
+
+    // Initialize the actors
+    let child: &'static RwLock<Option<crossbeam_channel::Sender<BookGetMessage>>> =
+        &*Box::leak(Box::new(RwLock::new(None)));
     unsafe {
         BOOK.set(child).unwrap();
     }
 
+    // Initialize the supervision tree
     Bastion::init();
-
     Bastion::supervisor(|sup| sup.children(resources::book::actor))
         .and_then(|_| Bastion::supervisor(|sup| sup.children(root)))
-        .expect("Couldn't create supervisor chain.");
-
+        .unwrap();
     Bastion::start();
     Bastion::block_until_stopped();
 }
 
-static mut APP: OnceCell<&'static Arc<&'static App>> = OnceCell::new();
-static CONFIG: OnceCell<Config> = OnceCell::new();
-
-fn initialize_config_once() -> &'static Config {
-    if CONFIG.get().is_none() {
-        CONFIG
-            .set(Config {
-                db_url: std::env::var("DB_URL").unwrap(),
-            })
-            .unwrap();
-    }
-    CONFIG.get().unwrap()
-}
-
 fn root(children: Children) -> Children {
-    let Config { db_url } = initialize_config_once();
-
-    children.with_name(ActorGroups::Input.as_ref()).with_exec(
-        move |bastion_ctx: BastionContext| async move {
-            let bastion_ptr: &'static BastionContext = Box::leak(Box::new(Arc::new(bastion_ctx)));
-            let bastion: &'static Arc<&'static BastionContext> =
-                Box::leak(Box::new(Arc::new(bastion_ptr)));
-            let db_pool_ptr: &'static PgPool = Box::leak(Box::new(
-                PgPoolOptions::new().connect(&db_url).await.unwrap(),
-            ));
-            let db_pool: &'static Arc<&'static PgPool> =
-                &*Box::leak(Box::new(Arc::new(db_pool_ptr)));
-
-            let app_ptr: &'static App = &*Box::leak(Box::new(App { db_pool, bastion }));
-            let app: &'static Arc<&'static App> = Box::leak(Box::new(Arc::new(app_ptr)));
-
-            let mut server = unsafe {
-                if let Err(app) = APP.set(app) {
-                    APP.take();
-                    APP.set(app).unwrap();
-                }
-                Server::with_state(ServerState {
-                    app: APP.get().unwrap(),
-                })
-            };
+    children
+        .with_name(ActorGroups::Input.as_ref())
+        .with_exec(move |_| async move {
+            let mut server = Server::with_state(ServerState {
+                global: GLOBAL.get().unwrap(),
+            });
 
             server.with(
                 CorsMiddleware::new()
@@ -92,6 +70,5 @@ fn root(children: Children) -> Children {
             server.listen(listen_addr).await.unwrap();
 
             Ok(())
-        },
-    )
+        })
 }

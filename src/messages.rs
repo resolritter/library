@@ -1,13 +1,11 @@
 use crate::entities::BookGetMessage;
 
 use once_cell::sync::OnceCell;
+use parking_lot::RwLock;
 use std::fmt::Debug;
-use std::sync::Arc;
-use std::sync::Mutex;
 
-pub static mut BOOK: OnceCell<
-    &'static Arc<&'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>>>,
-> = OnceCell::new();
+pub static mut BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookGetMessage>>>> =
+    OnceCell::new();
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
