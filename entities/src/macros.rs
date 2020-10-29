@@ -25,7 +25,7 @@ macro_rules! books_route_root {
 #[macro_export]
 macro_rules! book_borrow_route {
     () => {
-        "/borrow/{}"
+        "/borrow"
     };
 }
 #[macro_export]

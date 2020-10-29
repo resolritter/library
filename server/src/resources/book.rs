@@ -1,14 +1,14 @@
 use crate::auth::require_auth_token;
 use crate::messages::{
-    BookCreationMsg, BookEndBorrowByTitleMsg, BookGetByTitleMsg, BookBorrowByTitleMsg,
+    BookBorrowByTitleMsg, BookCreationMsg, BookEndBorrowByTitleMsg, BookGetByTitleMsg,
     BookPublicListMsg,
 };
 use crate::resources::user::check_access_mask;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
-    access_mask, Book, BookCreationPayload, BookEndBorrowByTitlePayload, BookGetByTitlePayload,
-    BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookPublic, BookPublicListPayload,
+    access_mask, Book, BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookCreationPayload,
+    BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic, BookPublicListPayload,
 };
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
@@ -202,7 +202,7 @@ async fn extract_borrow_book(
             Ok(BookBorrowByTitlePayload {
                 title: req.param("title")?,
                 borrow_length: body.borrow_length,
-                borrow_id: req.param("borrow_id")?,
+                borrow_id: body.borrow_id,
             })
         }
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),

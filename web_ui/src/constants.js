@@ -2,6 +2,11 @@ import { zipObject } from "lodash-es"
 
 import { dictionaryOf } from "src/utils"
 
+export const minute = 60
+export const hour = 60 * minute
+export const day = 24 * hour
+export const week = 7 * day
+
 export const devAPIURL = "http://localhost:8080"
 export const apiURL = process.env.API_URL ?? devAPIURL
 
@@ -17,6 +22,9 @@ export const userAPIAccessLevels = zipObject(userUIAccessLevelsListNamed, [
 export const apiEndpoints = {
   createUser: function () {
     return `${apiURL}/user`
+  },
+  borrowBook: function ({ title }) {
+    return `${apiURL}/book/${title}/borrow`
   },
   session: function () {
     return `${apiURL}/session`

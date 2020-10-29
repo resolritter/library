@@ -1,5 +1,6 @@
 import React from "react"
 import {
+  Button,
   Paper,
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import {
 import { useSnackbar } from "notistack"
 import { useSelector } from "react-redux"
 
-import { loadBooks } from "src/requests/book"
+import { borrowBook, loadBooks } from "src/requests/book"
 import { loadingStates } from "src/utils"
 
 const TableHeaderCell = withStyles({
@@ -24,20 +25,18 @@ const TableHeaderCell = withStyles({
 })(TableCell)
 
 export function Home() {
+  const { enqueueSnackbar } = useSnackbar()
   const hasLoaded = React.useRef(loadingStates.notStarted)
   const [isLoaded, setIsLoaded] = React.useState(false)
-  const { enqueueSnackbar } = useSnackbar()
-
+  const user = useSelector(function ({ user: { profile } }) {
+    return profile
+  })
   const books = useSelector(function ({ book: { items } }) {
     return items
   })
 
-  React.useLayoutEffect(
+  const reloadBooks = React.useCallback(
     function () {
-      if (hasLoaded.current !== loadingStates.notStarted) {
-        return
-      }
-      hasLoaded.current = loadingStates.loading
       loadBooks()
         .then(function (result) {
           if (result instanceof Error) {
@@ -50,7 +49,18 @@ export function Home() {
           enqueueSnackbar(err.message, { variant: "error" })
         })
     },
-    [hasLoaded],
+    [enqueueSnackbar, setIsLoaded],
+  )
+
+  React.useLayoutEffect(
+    function () {
+      if (hasLoaded.current !== loadingStates.notStarted) {
+        return
+      }
+      hasLoaded.current = loadingStates.loading
+      reloadBooks()
+    },
+    [hasLoaded, reloadBooks],
   )
 
   if (!isLoaded) {
@@ -70,14 +80,46 @@ export function Home() {
             <TableRow>
               <TableHeaderCell>Title</TableHeaderCell>
               <TableHeaderCell>Availability</TableHeaderCell>
+              <TableHeaderCell></TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {books.map(function ({ title, lease_until }, i) {
+            {books.map(function ({ title, borrow_until }, i) {
+              const canBeBorrowed = !borrow_until
+              console.log(books[i], user)
               return (
                 <TableRow hover key={i}>
                   <TableCell>{title}</TableCell>
-                  <TableCell>{lease_until ?? "Borrowable"}</TableCell>
+                  <TableCell>
+                    {canBeBorrowed ? "Can be borrowed" : borrow_until}
+                  </TableCell>
+                  <TableCell>
+                    {user && canBeBorrowed && (
+                      <div>
+                        <Button
+                          onClick={async function () {
+                            borrowBook({ title, email: user.email })
+                              .then(function (result) {
+                                if (result instanceof Error) {
+                                  enqueueSnackbar(result.message, {
+                                    variant: "error",
+                                  })
+                                } else {
+                                  reloadBooks()
+                                }
+                              })
+                              .catch(function (err) {
+                                enqueueSnackbar(err.message, {
+                                  variant: "error",
+                                })
+                              })
+                          }}
+                        >
+                          Borrow
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
                 </TableRow>
               )
             })}

@@ -221,18 +221,10 @@ fn root(
                 .at(books_route_root!())
                 .get(resources::book::public_list);
             server
-                .at(format!(
-                    concat!(book_route!(), book_borrow_route!(),),
-                    ":title", ":borrow_id"
-                )
-                .as_str())
+                .at(format!(concat!(book_route!(), book_borrow_route!(),), ":title").as_str())
                 .post(resources::book::borrow_book);
             server
-                .at(format!(
-                    concat!(book_route!(), book_borrow_route!(),),
-                    ":title", ":borrow_id"
-                )
-                .as_str())
+                .at(format!(concat!(book_route!(), book_borrow_route!(),), ":title").as_str())
                 .delete(resources::book::end_borrow);
 
             server.at(session_route!()).post(resources::user::login);
