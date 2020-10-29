@@ -1,40 +1,21 @@
 import React from "react"
 import {
   Card,
-  CardContent,
   Container,
   FormControl,
   Input,
   InputLabel,
   MenuItem,
   Select,
-  Typography,
-  withStyles,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
 
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
+import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
 import { routes, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
-import { flexCenteredColumn } from "src/styles"
-
-const CreateUserColumn = withStyles({
-  root: flexCenteredColumn,
-})(CardContent)
-
-const CreateUserColumnTitle = withStyles({
-  root: {
-    marginBottom: "0.5em",
-  },
-})(Typography)
-
-const CreateUserButtonRow = withStyles({
-  root: {
-    marginTop: "1.2em",
-  },
-})(FormControl)
 
 export function CreateUser() {
   const { enqueueSnackbar } = useSnackbar()
@@ -46,10 +27,8 @@ export function CreateUser() {
     <FullContentSpaceLayoutCentered>
       <Container maxWidth="sm">
         <Card>
-          <CreateUserColumn>
-            <CreateUserColumnTitle variant="h4">
-              Create User
-            </CreateUserColumnTitle>
+          <Column>
+            <ColumnTitle variant="h4">Create User</ColumnTitle>
             <form
               onSubmit={async function (ev) {
                 ev.preventDefault()
@@ -91,11 +70,11 @@ export function CreateUser() {
                   <MenuItem value={userUIAccessLevels.admin}>Admin</MenuItem>
                 </Select>
               </FormControl>
-              <CreateUserButtonRow fullWidth>
+              <ButtonRow fullWidth>
                 <LoadingSubmitButton {...{ isLoading }} />
-              </CreateUserButtonRow>
+              </ButtonRow>
             </form>
-          </CreateUserColumn>
+          </Column>
         </Card>
       </Container>
     </FullContentSpaceLayoutCentered>

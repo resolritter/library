@@ -1,38 +1,19 @@
 import React from "react"
 import {
   Card,
-  CardContent,
   Container,
   FormControl,
   Input,
   InputLabel,
-  Typography,
-  withStyles,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
 
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
+import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
 import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { login } from "src/requests/user"
 import { history } from "src/setup"
-import { flexCenteredColumn } from "src/styles"
-
-const LoginColumn = withStyles({
-  root: flexCenteredColumn,
-})(CardContent)
-
-const LoginColumnTitle = withStyles({
-  root: {
-    marginBottom: "0.5em",
-  },
-})(Typography)
-
-const LoginButtonRow = withStyles({
-  root: {
-    marginTop: "1.2em",
-  },
-})(FormControl)
 
 export function Login() {
   const { enqueueSnackbar } = useSnackbar()
@@ -43,8 +24,8 @@ export function Login() {
     <FullContentSpaceLayoutCentered>
       <Container maxWidth="sm">
         <Card>
-          <LoginColumn>
-            <LoginColumnTitle variant="h4">Login</LoginColumnTitle>
+          <Column>
+            <ColumnTitle variant="h4">Login</ColumnTitle>
             <form
               onSubmit={async function (ev) {
                 ev.preventDefault()
@@ -70,11 +51,11 @@ export function Login() {
                   }}
                 />
               </FormControl>
-              <LoginButtonRow fullWidth>
+              <ButtonRow fullWidth>
                 <LoadingSubmitButton {...{ isLoading }} />
-              </LoginButtonRow>
+              </ButtonRow>
             </form>
-          </LoginColumn>
+          </Column>
         </Card>
       </Container>
     </FullContentSpaceLayoutCentered>
