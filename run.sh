@@ -4,9 +4,27 @@ set -e
 
 root_dir="$(dirname $(realpath "$0"))"
 
+# wrapper for memcached usage in the command line
+# reduced and tweaked extract of https://gist.github.com/goodevilgenius/11375877
+mc_sendmsg() { echo -e "$*\r\nquit\n" | nc 127.0.01 11211; }
+mc_get() { mc_sendmsg "get $1" | awk "/^VALUE $1/{a=1;next}/^END/{a=0}a" ;}
+mc_doset() {
+	command="$1"
+	shift
+	key="$1"
+	shift
+	exptime="$1"
+	shift
+	val="$*"
+	let bytes=$(echo -n "$val"|wc -c)
+	mc_sendmsg "$command $key 0 $exptime $bytes\r\n$val"
+}
+mc_set() { mc_doset set "$@";}
+mc_delete() { mc_sendmsg delete "$*";}
+
 get_available_port () {
   read lowest highest < /proc/sys/net/ipv4/ip_local_port_range
-  local taken_ports=( $(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }' | uniq) )
+  local taken_ports=( $(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }') )
 
   for port in $(seq $lowest $highest); do
     for taken_i in $(seq 0 ${#taken_ports[@]}); do
@@ -15,9 +33,12 @@ get_available_port () {
       fi
     done
 
-    if [ "$1" = "sync" ] && [ "$(node "$root_dir/scripts/register_taken_port.js" "$port")" ]; then
+    key="port_taken_$port"
+    if [ "$1" = "sync" ] && [ "$(mc_get "$key")" ]; then
       continue
     fi
+
+    mc_set "$key" 0 1
 
     echo "$port"
     break
@@ -41,6 +62,10 @@ while [[ "$#" -gt 0 ]]; do
     ;;
     get_port_sync)
       get_available_port sync
+      exit $?
+    ;;
+    delete_port)
+      mc_delete "port_taken_$2"
       exit $?
     ;;
     test|test_server|server|db|test_db) CMD="$1";;

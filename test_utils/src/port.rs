@@ -9,7 +9,7 @@ pub fn get_free_port() -> Port {
             .arg("-x")
             .arg(tests_lock_path())
             .arg("-c")
-            .arg(format!("{} get_port_sync", executable_path()))
+            .arg(format!("{} get_port_sync | tail -n +2", executable_path()))
             .stdout(Stdio::piped())
             .spawn()
             .unwrap()
