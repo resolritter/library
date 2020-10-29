@@ -13,7 +13,7 @@ where
 {
     let mut resp = Response::new(status);
     if let Some(item) = content {
-        resp.set_body(Body::from_json(&serde_json::json!({ "data": item }))?);
+        resp.set_body(Body::from_json(&serde_json::json!(item))?);
     }
     Ok(resp)
 }

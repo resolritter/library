@@ -34,14 +34,12 @@ actor_response_handler::generate!(Config {
 async fn extract_lease_book(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookLeaseByTitlePayload> {
-    let params = BookGetByTitlePayload {
-        title: req.param("title")?,
-    };
     let body = req.body_json::<BookLeaseByTitleRequestBody>().await?;
 
     Ok(BookLeaseByTitlePayload {
-        title: params.title,
+        title: req.param("title")?,
         lease_length: body.lease_length,
+        lease_id_req: req.param("lease_id")?,
     })
 }
 actor_response_handler::generate!(Config {
@@ -84,10 +82,12 @@ pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<Strin
     }
 
     let lease_length = &msg.payload.lease_length;
+    let lease_id = &msg.payload.lease_id_req;
     let try_lease = sqlx::query(
-        "UPDATE book SET lease_until=$1 WHERE title=$2 AND lease_until IS NULL OR lease_until < $3",
+        "UPDATE book SET lease_until=$1,lease_id=$2 WHERE title=$3 AND lease_until IS NULL OR lease_until < $4",
     )
     .bind(now + lease_length)
+    .bind(lease_id)
     .bind(title)
     .bind(now)
     .execute(msg.db_pool)

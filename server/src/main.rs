@@ -195,9 +195,8 @@ fn root(
             server
                 .at(format!("/{}/:title", entities::book::BOOK_ROUTE).as_str())
                 .get(resources::book::get);
-            // TODO move this to "/book/:title/lease/:user_id"
             server
-                .at(format!("/{}/:title", entities::book::BOOK_ROUTE).as_str())
+                .at(format!("/{}/:title/lease/:lease_id", entities::book::BOOK_ROUTE).as_str())
                 .patch(resources::book::lease_book);
 
             // TODO add password to user login

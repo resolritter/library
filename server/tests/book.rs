@@ -1,6 +1,7 @@
-use entities::book;
+use entities::{book, user, BookLeaseByTitlePayload, UserCreationPayload};
 use insta::assert_snapshot;
 use stdext::function_name;
+use surf::StatusCode;
 use tempdir::TempDir;
 use test_utils::{format::format_test_name, read_snapshot, spawn_test_program, SpawnedTest};
 
@@ -30,26 +31,33 @@ async fn test_lease() {
         process: _,
     } = &spawn_test_program(&tmp_dir);
 
+    const WHOLE_DAY: i64 = 86400;
+    let (_, sample_user) = user::create(
+        &server_addr,
+        &UserCreationPayload {
+            email: "user@user.com".to_string(),
+            access_level: 0,
+        },
+    )
+    .await;
+    let payload = BookLeaseByTitlePayload {
+        title: "Rapunzel".to_string(),
+        lease_id_req: sample_user.email,
+        lease_length: WHOLE_DAY,
+    };
+
     // Lease a book for a whole day
-    let book = "Rapunzel";
     assert_snapshot!(
         format!("{}_good", test_name),
-        book::borrow(&server_addr, book)
+        book::borrow(&server_addr, &payload)
             .await
             .body_string()
             .await
             .unwrap()
     );
 
-    // This time it should not be allowed since the book will still be borrowed.
-    assert_snapshot!(
-        format!("{}_bad", test_name),
-        book::bad_borrow(&server_addr, book)
-            .await
-            .body_string()
-            .await
-            .unwrap()
-    );
+    let bad_borrow = book::do_borrow(&server_addr, &payload).await.unwrap();
+    assert!(bad_borrow.status() == StatusCode::Forbidden);
 
     assert_snapshot!(read_snapshot(&log_dir));
 }

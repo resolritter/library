@@ -1,5 +1,5 @@
 ---
-source: tests/book.rs
+source: server/tests/book.rs
 expression: get.body_string().await.unwrap()
 ---
-{"data":{"id":2,"lease_id":null,"lease_until":null,"title":"Rapunzel"}}
+{"id":2,"lease_id":null,"lease_until":null,"title":"Rapunzel"}
