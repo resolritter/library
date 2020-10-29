@@ -29,26 +29,14 @@ export const MainAppBar = function () {
           flex={1}
         >
           {!user && (
-            <>
-              <Button
-                onClick={function () {
-                  history.push(routes.login())
-                }}
-                variant="contained"
-              >
-                Login
-              </Button>
-              <ButtonGap />
-              <Button
-                onClick={function () {
-                  history.push(routes.createUser())
-                }}
-                variant="contained"
-                color="primary"
-              >
-                Create user
-              </Button>
-            </>
+            <Button
+              onClick={function () {
+                history.push(routes.login())
+              }}
+              variant="contained"
+            >
+              Login
+            </Button>
           )}
           {user && (
             <>
@@ -64,6 +52,16 @@ export const MainAppBar = function () {
               </Button>
             </>
           )}
+          <ButtonGap />
+          <Button
+            onClick={function () {
+              history.push(routes.createUser())
+            }}
+            variant="contained"
+            color="primary"
+          >
+            Create user
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>

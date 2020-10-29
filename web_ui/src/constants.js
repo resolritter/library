@@ -16,7 +16,7 @@ export const userUIAccessLevels = dictionaryOf(userUIAccessLevelsListNamed)
 export const userAPIAccessLevels = zipObject(userUIAccessLevelsListNamed, [
   0x001,
   0x011,
-  0x11,
+  0x111,
 ])
 
 export const apiEndpoints = {

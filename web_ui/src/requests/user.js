@@ -25,16 +25,14 @@ export const login = async function ({ email }) {
   }
 }
 
-export const createUser = async function ({ email, accessLevel }) {
-  let accessMask
-  if (accessLevel) {
-    const accessMask = userAPIAccessLevels[accessLevel]
-    if (!accessMask) {
-      return new Error(`${accessLevel} is not a valid permission`)
-    }
-  } else {
-    accessMask = userAPIAccessLevels.user
-  }
+export const createUser = async function ({
+  email,
+  accessLevel,
+  shouldSetAsCurrent,
+}) {
+  const accessMask = accessLevel
+    ? userAPIAccessLevels[accessLevel]
+    : userAPIAccessLevels.user
 
   const response = await fetch(apiEndpoints.createUser(), {
     method: "POST",
@@ -50,7 +48,9 @@ export const createUser = async function ({ email, accessLevel }) {
   })
 
   if (response.status === StatusCodes.CREATED) {
-    store.dispatch(userStore.actions.setUser(await response.json()))
+    if (shouldSetAsCurrent) {
+      store.dispatch(userStore.actions.setUser(await response.json()))
+    }
   } else {
     return await handleErrorResponse(response)
   }

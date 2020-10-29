@@ -9,6 +9,7 @@ import {
   Select,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
+import { useSelector } from "react-redux"
 
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
@@ -16,12 +17,23 @@ import { routes, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
+import { handleWithSnackbar } from "src/utils"
 
 export function CreateUser() {
   const { enqueueSnackbar } = useSnackbar()
   const [email, setEmail] = React.useState("user@user.com")
   const [accessLevel, setAccessLevel] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const user = useSelector(function ({ user: { profile } }) {
+    return profile
+  })
+  const errorToSnackbar = React.useMemo(
+    function () {
+      return handleWithSnackbar(enqueueSnackbar)
+    },
+    [enqueueSnackbar],
+  )
+  const shouldSetAsCurrent = !user
 
   return (
     <FullContentSpaceLayoutCentered>
@@ -30,16 +42,20 @@ export function CreateUser() {
           <Column>
             <ColumnTitle variant="h4">Create User</ColumnTitle>
             <form
-              onSubmit={async function (ev) {
+              onSubmit={function (ev) {
                 ev.preventDefault()
-                setIsLoading(true)
-                const result = await createUser({ email, accessLevel })
-                if (result instanceof Error) {
-                  enqueueSnackbar(result.message, { variant: "error" })
-                  setIsLoading(false)
-                } else {
-                  history.push(routes.home())
-                }
+                errorToSnackbar(
+                  createUser({ email, accessLevel, shouldSetAsCurrent }),
+                  function () {
+                    if (shouldSetAsCurrent) {
+                      history.push(routes.home())
+                    } else {
+                      enqueueSnackbar("Done!", {
+                        variant: "success",
+                      })
+                    }
+                  },
+                )
               }}
             >
               <FormControl fullWidth>

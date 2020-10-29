@@ -8,7 +8,7 @@ export const getCors = function () {
 }
 
 export const getAccessToken = function () {
-  return store.getState().user.accessToken
+  return store.getState().user.profile?.access_token
 }
 
 export const handleErrorResponse = async function (response) {
