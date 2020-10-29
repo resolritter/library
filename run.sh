@@ -2,6 +2,22 @@
 
 set -e
 
+get_available_port () {
+  read lowest highest < /proc/sys/net/ipv4/ip_local_port_range
+  local taken_ports=( $(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }' | uniq) )
+
+  for port in $(seq $lowest $highest); do
+    for taken_i in $(seq 0 ${#taken_ports[@]}); do
+      if [ "${taken_ports[$taken_i]}" = "$port" ]; then
+        continue 2
+      fi
+    done
+
+    echo "$port"
+    break
+  done
+}
+
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     # options
@@ -13,6 +29,10 @@ while [[ "$#" -gt 0 ]]; do
     --listen) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
     --reset-before-run) RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1";;
     # commands
+    get_port)
+      get_available_port
+      exit $?
+    ;;
     test|test_server|server|db|test_db) CMD="$1";;
     # fallthrough
     *) echo "Unknown parameter: $1"; exit 1 ;;
@@ -47,22 +67,6 @@ db_deps () {
   mkdir -m 777 -p "$APP_DB_DIR"
 }
 
-get_available_port () {
-  read lowest highest < /proc/sys/net/ipv4/ip_local_port_range
-  local taken_ports=( $(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }' | uniq) )
-
-  for port in $(seq $lowest $highest); do
-    for taken_i in $(seq 0 ${#taken_ports[@]}); do
-      if [ "${taken_ports[$taken_i]}" = "$port" ]; then
-        continue 2
-      fi
-    done
-
-    echo "$port"
-    break
-  done
-}
-
 run_server () {
   cargo run -- --db-url="$DB_URL" $RUN_SERVER_EXTRA
 }
@@ -79,7 +83,7 @@ case "$CMD" in
       exit 1
     fi
 
-    RUN_SERVER_EXTRA="--reset-before-run --log-dir="$LOG_DIR" --log-format="test" --signal-file="$SIGNAL_FILE""
+    RUN_SERVER_EXTRA="--reset-before-run --log-dir="$LOG_DIR" --log-format="test" --signal-file="$SIGNAL_FILE" $RUN_SERVER_EXTRA"
     run_server
   ;;
   db)
