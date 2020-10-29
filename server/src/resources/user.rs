@@ -14,14 +14,9 @@ pub fn from_row(row: &PgRow) -> Result<UserPublic, sqlx::Error> {
     })
 }
 
-pub async fn check_access_token(
-    email: &str,
-    access_token: &str,
-    db_pool: &PgPool,
-) -> Result<bool, sqlx::Error> {
+pub async fn check_access_token(access_token: &str, db_pool: &PgPool) -> Result<bool, sqlx::Error> {
     Ok(
-        sqlx::query(r#"SELECT EXISTS(SELECT 1 FROM "user" WHERE email=$1 AND access_token=$2)"#)
-            .bind(email)
+        sqlx::query(r#"SELECT EXISTS(SELECT 1 FROM "user" WHERE access_token=$1)"#)
             .bind(access_token)
             .fetch_one(db_pool)
             .await?

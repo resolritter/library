@@ -19,13 +19,13 @@ structout::generate!(
         pub lease_id_req: LeaseBookId,
         pub lease_until: Option<i64>,
         pub lease_length: i64,
-        pub access_token_req: String,
+        pub access_token: String,
     } => {
-        Book => [attr(#[derive(Serialize, Debug)]), omit(lease_length), omit(lease_id_req), omit(access_token_req)],
+        Book => [attr(#[derive(Serialize, Debug)]), omit(lease_length), omit(lease_id_req), omit(access_token)],
         BookSeed => [include(title)],
         BookGetByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title)],
         BookLeaseByTitleRequestBody => [attr(#[derive(Deserialize, Debug)]), include(lease_length), include(lease_id_req)],
-        BookEndLoanByTitlePayload => [attr(#[derive(Serialize, Deserialize, Debug)]), include(title), include(lease_id_req), include(access_token_req)],
+        BookEndLoanByTitlePayload => [attr(#[derive(Serialize, Deserialize, Debug)]), include(title), include(lease_id_req), include(access_token)],
         BookLeaseByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title), include(lease_id_req), include(lease_length)]
     }
 );

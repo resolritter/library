@@ -20,12 +20,12 @@ BookLeaseByTitlePayload {
 BookEndLoanByTitlePayload {
     title: "Rapunzel",
     lease_id_req: "first@user.com",
-    access_token_req: "second@user.com",
+    access_token: "second@user.com",
 }
 BookEndLoanByTitlePayload {
     title: "Rapunzel",
     lease_id_req: "first@user.com",
-    access_token_req: "first@user.com",
+    access_token: "first@user.com",
 }
 BookLeaseByTitlePayload {
     title: "Rapunzel",
@@ -42,6 +42,6 @@ UserCreationPayload {
 BookEndLoanByTitlePayload {
     title: "Rapunzel",
     lease_id_req: "second@user.com",
-    access_token_req: "librarian@user.com",
+    access_token: "librarian@user.com",
 }
 

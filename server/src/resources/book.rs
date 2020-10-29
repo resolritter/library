@@ -31,9 +31,9 @@ pub async fn end_loan_by_title(
     if let Some(row) = raw {
         let lease_id: Option<String> = row.try_get("lease_id")?;
         if let Some(lease_id) = lease_id {
-            if lease_id == msg.payload.access_token_req
+            if lease_id == msg.payload.access_token
                 || check_access_mask(
-                    &msg.payload.access_token_req,
+                    &msg.payload.access_token,
                     access_mask::LIBRARIAN,
                     msg.db_pool,
                 )
@@ -68,7 +68,7 @@ async fn extract_end_loan(
     Ok(BookEndLoanByTitlePayload {
         title: req.param("title")?,
         lease_id_req: req.param("lease_id")?,
-        access_token_req: req.header("X-Auth").unwrap().get(0).unwrap().to_string(),
+        access_token: req.header("X-Auth").unwrap().get(0).unwrap().to_string(),
     })
 }
 actor_response_handler::generate!(Config {
