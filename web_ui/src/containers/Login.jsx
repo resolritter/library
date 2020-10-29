@@ -7,6 +7,7 @@ import {
   InputLabel,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
+import { useSelector } from "react-redux"
 
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
@@ -14,11 +15,29 @@ import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { login } from "src/requests/user"
 import { history } from "src/setup"
+import { handleWithSnackbar } from "src/utils"
 
 export function Login() {
   const { enqueueSnackbar } = useSnackbar()
   const [email, setEmail] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const user = useSelector(function ({ user: { profile } }) {
+    return profile
+  })
+  const errorToSnackbar = React.useMemo(
+    function () {
+      return handleWithSnackbar(enqueueSnackbar)
+    },
+    [enqueueSnackbar],
+  )
+  React.useLayoutEffect(
+    function () {
+      if (user) {
+        history.push(routes.home())
+      }
+    },
+    [user],
+  )
 
   return (
     <FullContentSpaceLayoutCentered>
@@ -27,16 +46,11 @@ export function Login() {
           <Column>
             <ColumnTitle variant="h4">Login</ColumnTitle>
             <form
-              onSubmit={async function (ev) {
+              onSubmit={function (ev) {
                 ev.preventDefault()
-                setIsLoading(true)
-                const result = await login({ email })
-                if (result instanceof Error) {
-                  enqueueSnackbar(result.message, { variant: "error" })
-                  setIsLoading(false)
-                } else {
+                errorToSnackbar(login({ email }), function () {
                   history.push(routes.home())
-                }
+                })
               }}
             >
               <FormControl fullWidth>
