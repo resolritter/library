@@ -13,6 +13,7 @@ import { ButtonRow, Column, ColumnTitle } from "src/components/Form"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
+import labels from "src/labels.json"
 import { login } from "src/requests/user"
 import { history } from "src/setup"
 import { promiseToSnackbar } from "src/utils"
@@ -58,14 +59,18 @@ export function Login() {
                   type="email"
                   name="email"
                   id="email"
-                  aria-describedby="my-helper-text"
+                  aria-label={labels.Login.Email.id}
                   onChange={function (ev) {
                     setEmail(ev.target.value)
                   }}
+                  autoFocus
                 />
               </FormControl>
               <ButtonRow fullWidth>
-                <LoadingSubmitButton isLoading={false} />
+                <LoadingSubmitButton
+                  ariaLabel={labels.Login.Submit.id}
+                  isLoading={false}
+                />
               </ButtonRow>
             </form>
           </Column>

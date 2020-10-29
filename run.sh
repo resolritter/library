@@ -113,7 +113,7 @@ clean_test_server () {
 
 case "$CMD" in
   test_db)
-    export APP_DB_PORT="$(get_available_port)"
+    export APP_DB_PORT="$(get_available_port | tail -n +2)"
     echo "$APP_DB_PORT" > "$TEST_DB_PORT_FILE"
     docker-compose up --force-recreate --renew-anon-volumes db
   ;;

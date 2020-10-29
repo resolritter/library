@@ -1,17 +1,68 @@
 {
-  "CreateUser": {
-    "id": "CreateUser",
-    "Email": {
-      "id": "CreateUser.Email"
-    }
-  },
-  "AppBar": {
-    "id": "AppBar",
     "CreateUser": {
-      "id": "AppBar.CreateUser"
+        "id": "CreateUser",
+        "Email": {
+            "id": "CreateUser.Email"
+        },
+        "AccessLevel": {
+            "id": "CreateUser.AccessLevel",
+            "User": {
+                "id": "CreateUser.AccessLevel.User"
+            },
+            "Librarian": {
+                "id": "CreateUser.AccessLevel.Librarian"
+            },
+            "Admin": {
+                "id": "CreateUser.AccessLevel.Admin"
+            }
+        },
+        "Submit": {
+            "id": "CreateUser.Submit"
+        }
+    },
+    "Books": {
+        "id": "Books",
+        "Borrow": {
+            "id": "Books.Borrow"
+        },
+        "EndBorrow": {
+            "id": "Books.EndBorrow"
+        }
+    },
+    "AppBar": {
+        "id": "AppBar",
+        "Books": {
+            "id": "AppBar.Books"
+        },
+        "CreateUser": {
+            "id": "AppBar.CreateUser"
+        },
+        "CreateBook": {
+            "id": "AppBar.CreateBook"
+        },
+        "Login": {
+            "id": "AppBar.Login"
+        },
+        "Logout": {
+            "id": "AppBar.Logout"
+        }
     },
     "Login": {
-      "id": "AppBar.Login"
+        "id": "Login",
+        "Email": {
+            "id": "Login.Email"
+        },
+        "Submit": {
+            "id": "Login.Submit"
+        }
+    },
+    "CreateBook": {
+        "id": "CreateBook",
+        "Title": {
+            "id": "CreateBook.Title"
+        },
+        "Submit": {
+            "id": "CreateBook.Submit"
+        }
     }
-  }
 }

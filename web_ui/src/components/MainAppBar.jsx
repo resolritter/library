@@ -31,6 +31,7 @@ export const MainAppBar = function () {
               history.push(routes.home())
             }}
             color="inherit"
+            aria-label={label.AppBar.Books.id}
           >
             Books
           </Button>
@@ -46,6 +47,7 @@ export const MainAppBar = function () {
                     history.push(routes.createBook())
                   }}
                   color="inherit"
+                  aria-label={label.AppBar.CreateBook.id}
                 >
                   Create Book
                 </Button>
@@ -97,6 +99,7 @@ export const MainAppBar = function () {
                   dispatch(userStore.actions.setUser())
                 }}
                 variant="contained"
+                aria-label={label.AppBar.Logout.id}
               >
                 LOGOUT
               </Button>

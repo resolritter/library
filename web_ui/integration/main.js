@@ -71,13 +71,13 @@ const cleanOnExit = function () {
 process.on("SIGINT", cleanOnExit)
 process.on("SIGTERM", cleanOnExit)
 
-const specName = process.argv[2]
+const operation = process.argv[2] || "open"
 const cypressPath = path.join(__dirname, "./node_modules/.bin/cypress")
 
 sleep.msleep(5000)
 const runCypress = cp.spawnSync(
   cypressPath,
-  ["open", "--env", `UIAddr=${webUIAddr},ID=${webUIPort}`],
+  [operation, "--env", `UIAddr=${webUIAddr},ID=${webUIPort}`],
   { cwd: __dirname, stdio: ["ignore", "inherit", "inherit"] },
 )
 cleanOnExit()

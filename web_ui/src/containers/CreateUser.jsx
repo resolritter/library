@@ -15,7 +15,7 @@ import { ButtonRow, Column, ColumnTitle } from "src/components/Form"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes, userAPIAccessLevels, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
-import label from "src/labels.json"
+import labels from "src/labels.json"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
 import { promiseToSnackbar } from "src/utils"
@@ -84,7 +84,7 @@ export function CreateUser() {
                     setEmail(ev.target.value)
                   }}
                   placeholder={"user@mail.com"}
-                  aria-label={label.CreateUser.Email.id}
+                  aria-label={labels.CreateUser.Email.id}
                   autoFocus
                   required
                 />
@@ -101,12 +101,24 @@ export function CreateUser() {
                         setAccessLevel(ev.target.value)
                       }}
                       labelId="access_level_label"
+                      aria-label={labels.CreateUser.AccessLevel.id}
                     >
-                      <MenuItem value={""}>None</MenuItem>
-                      <MenuItem value={userUIAccessLevels.librarian}>
+                      <MenuItem
+                        aria-label={labels.CreateUser.AccessLevel.User.id}
+                        value={""}
+                      >
+                        None
+                      </MenuItem>
+                      <MenuItem
+                        aria-label={labels.CreateUser.AccessLevel.Librarian.id}
+                        value={userUIAccessLevels.librarian}
+                      >
                         Librarian
                       </MenuItem>
-                      <MenuItem value={userUIAccessLevels.admin}>
+                      <MenuItem
+                        aria-label={labels.CreateUser.AccessLevel.Admin.id}
+                        value={userUIAccessLevels.admin}
+                      >
                         Admin
                       </MenuItem>
                     </Select>
@@ -114,7 +126,10 @@ export function CreateUser() {
                 </>
               )}
               <ButtonRow fullWidth>
-                <LoadingSubmitButton isLoading={false} />
+                <LoadingSubmitButton
+                  ariaLabel={labels.CreateUser.Submit.id}
+                  isLoading={false}
+                />
               </ButtonRow>
             </form>
           </Column>

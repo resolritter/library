@@ -7,8 +7,10 @@ import { Provider } from "react-redux"
 import App from "./App"
 import { history, store } from "./setup"
 
+window.notistackRef = React.createRef()
+
 ReactDOM.render(
-  <SnackbarProvider>
+  <SnackbarProvider ref={window.notistackRef}>
     <Provider store={store}>
       <ConnectedRouter history={history}>
         <App />

@@ -1,3 +1,13 @@
+# Running
+
+You are expected to have all dependencies needed for the whole project to run.
+
+Run `node main.js` `run` for running the test suite and recording it.
+
+Run `node main.js` `open` for opening the Cypress UI and managing the tests there.
+
+# Credits
+
 This template was started from https://github.com/basarat/cypress-ts, which adheres to the MIT license.
 
 ```

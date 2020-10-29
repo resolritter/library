@@ -15,6 +15,7 @@ import { useSnackbar } from "notistack"
 import { useSelector } from "react-redux"
 
 import { userAPIAccessLevels } from "src/constants"
+import labels from "src/labels.json"
 import { borrowBook, endBookBorrow, loadBooks } from "src/requests/book"
 import { loadingStates, promiseToSnackbar } from "src/utils"
 
@@ -113,6 +114,7 @@ export function Home() {
                       ? undefined
                       : { opacity: 0, pointerEvents: "none", cursor: "none" }
                   }
+                  aria-label={`${labels.Books.Borrow.id}__${title}`}
                 >
                   Borrow
                 </Button>
@@ -133,6 +135,7 @@ export function Home() {
                       ? undefined
                       : { opacity: 0, pointerEvents: "none", cursor: "none" }
                   }
+                  aria-label={`${labels.Books.EndBorrow.id}__${title}`}
                 >
                   Cancel Borrow
                 </Button>

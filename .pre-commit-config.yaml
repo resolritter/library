@@ -20,5 +20,7 @@ repos:
         language: node
         files: ^web_ui\/.*\.(jsx?|html|json)$
         args: [
-          '--check'
+          '--check',
+          '--ignore-path',
+          './web_ui/.prettierignore'
         ]

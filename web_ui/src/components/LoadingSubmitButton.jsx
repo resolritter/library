@@ -7,7 +7,7 @@ export const ButtonProgress = withStyles({
   },
 })(CircularProgress)
 
-export function LoadingSubmitButton({ isLoading }) {
+export function LoadingSubmitButton({ isLoading, ariaLabel }) {
   return (
     <Box
       position="relative"
@@ -20,6 +20,7 @@ export function LoadingSubmitButton({ isLoading }) {
         variant="contained"
         color="primary"
         disabled={isLoading}
+        aria-label={ariaLabel}
       >
         <span style={{ opacity: isLoading ? 0 : 1 }}>Submit</span>
       </Button>

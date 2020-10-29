@@ -13,6 +13,7 @@ import { ButtonRow, Column, ColumnTitle } from "src/components/Form"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes, userAPIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
+import labels from "src/labels.json"
 import { createBook } from "src/requests/book"
 import { history } from "src/setup"
 import { promiseToSnackbar } from "src/utils"
@@ -76,7 +77,10 @@ export function CreateBook() {
                 />
               </FormControl>
               <ButtonRow fullWidth>
-                <LoadingSubmitButton isLoading={false} />
+                <LoadingSubmitButton
+                  ariaLabel={labels.CreateBook.Submit.id}
+                  isLoading={false}
+                />
               </ButtonRow>
             </form>
           </Column>
