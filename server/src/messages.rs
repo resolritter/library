@@ -1,5 +1,5 @@
 use crate::logging::Loggable;
-use entities::{Book, UserPublic};
+use entities::{Book, BookPublic, UserPublic};
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
@@ -16,6 +16,7 @@ resource_messaging::generate!(
         (GetByTitle, Book),
         (EndLoanByTitle, ()),
         (Creation, Book),
+        (PublicList, Vec<BookPublic>),
     ]
 );
 
@@ -26,6 +27,7 @@ impl Loggable for BookMsg {
             BookMsg::LeaseByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::EndLoanByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::Creation(msg) => format!("{:#?}", msg.payload),
+            BookMsg::PublicList(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

@@ -1,12 +1,14 @@
+use crate::auth::require_auth_token;
 use crate::messages::{
     BookCreationMsg, BookEndLoanByTitleMsg, BookGetByTitleMsg, BookLeaseByTitleMsg,
+    BookPublicListMsg,
 };
 use crate::resources::user::check_access_mask;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
     access_mask, Book, BookCreationPayload, BookEndLoanByTitlePayload, BookGetByTitlePayload,
-    BookLeaseByTitlePayload, BookLeaseByTitleRequestBody,
+    BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookPublic, BookPublicListPayload,
 };
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
@@ -17,6 +19,14 @@ pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
         id: row.try_get("id")?,
         title: row.try_get("title")?,
         lease_id: row.try_get("lease_id")?,
+        lease_until: row.try_get("lease_until")?,
+    })
+}
+
+pub fn public_from_row(row: &PgRow) -> Result<BookPublic, sqlx::Error> {
+    Ok(BookPublic {
+        id: row.try_get("id")?,
+        title: row.try_get("title")?,
         lease_until: row.try_get("lease_until")?,
     })
 }
@@ -67,11 +77,14 @@ pub async fn end_loan_by_title(
 async fn extract_end_loan(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookEndLoanByTitlePayload> {
-    Ok(BookEndLoanByTitlePayload {
-        title: req.param("title")?,
-        lease_id: req.param("lease_id")?,
-        access_token: req.header("X-Auth").unwrap().get(0).unwrap().to_string(),
-    })
+    match require_auth_token(&req).await {
+        (StatusCode::Ok, Some(access_token)) => Ok(BookEndLoanByTitlePayload {
+            title: req.param("title")?,
+            lease_id: req.param("lease_id")?,
+            access_token,
+        }),
+        (status_code, _) => Err(tide::Error::from_str(status_code, "")),
+    }
 }
 actor_response_handler::generate!(Config {
     name: end_loan,
@@ -127,7 +140,10 @@ pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::E
 }
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
-    Ok(req.body_json::<BookCreationPayload>().await?)
+    match require_auth_token(&req).await {
+        (StatusCode::Ok, Some(_)) => Ok(req.body_json::<BookCreationPayload>().await?),
+        (status_code, _) => Err(tide::Error::from_str(status_code, "")),
+    }
 }
 actor_response_handler::generate!(Config {
     name: post,
@@ -179,13 +195,18 @@ pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<Strin
 async fn extract_lease_book(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookLeaseByTitlePayload> {
-    let body = req.body_json::<BookLeaseByTitleRequestBody>().await?;
+    match require_auth_token(&req).await {
+        (StatusCode::Ok, Some(_)) => {
+            let body = req.body_json::<BookLeaseByTitleRequestBody>().await?;
 
-    Ok(BookLeaseByTitlePayload {
-        title: req.param("title")?,
-        lease_length: body.lease_length,
-        lease_id: req.param("lease_id")?,
-    })
+            Ok(BookLeaseByTitlePayload {
+                title: req.param("title")?,
+                lease_length: body.lease_length,
+                lease_id: req.param("lease_id")?,
+            })
+        }
+        (status_code, _) => Err(tide::Error::from_str(status_code, "")),
+    }
 }
 actor_response_handler::generate!(Config {
     name: lease_book,
@@ -194,11 +215,44 @@ actor_response_handler::generate!(Config {
     tag: LeaseByTitle
 });
 
+#[inline(always)]
+pub async fn public_list_by_query(
+    msg: &BookPublicListMsg,
+) -> Result<ResponseData<Vec<BookPublic>>, sqlx::Error> {
+    let result = if let Some(title_query) = &msg.payload.query {
+        sqlx::query("SELECT id, title, lease_until FROM book WHERE title ILIKE CONCAT('%',$1,'%')")
+            .bind(title_query)
+    } else {
+        sqlx::query("SELECT id, title, lease_until FROM book")
+    }
+    .fetch_all(msg.db_pool)
+    .await?;
+
+    let mut books: Vec<BookPublic> = Vec::with_capacity(result.len());
+    for row in result.iter().collect::<Vec<_>>() {
+        books.push(public_from_row(row)?)
+    }
+    Ok(ResponseData(StatusCode::Ok, Some(books)))
+}
+#[inline(always)]
+async fn extract_public_list(req: &Request<ServerState>) -> tide::Result<BookPublicListPayload> {
+    Ok(BookPublicListPayload {
+        query: req.param("query").ok(),
+    })
+}
+actor_response_handler::generate!(Config {
+    name: public_list,
+    actor: Book,
+    response_type: Vec<BookPublic>,
+    tag: PublicList
+});
+
 endpoint_actor::generate!({ actor: Book }, {
     GetByTitle: get_by_title,
     LeaseByTitle: lease_by_id,
     EndLoanByTitle: end_loan_by_title,
     Creation: create,
+    PublicList: public_list_by_query
 });
 
 pub async fn seed(pool: &PgPool) -> Vec<Book> {

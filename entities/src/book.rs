@@ -1,5 +1,7 @@
-use crate::data::{Book, BookCreationPayload, BookEndLoanByTitlePayload, BookLeaseByTitlePayload};
-use crate::{book_route, end_loan_route, lease_route, server_root};
+use crate::data::{
+    Book, BookCreationPayload, BookEndLoanByTitlePayload, BookLeaseByTitlePayload, BookPublic,
+};
+use crate::{book_route, books_route, books_route_root, end_loan_route, lease_route, server_root};
 use surf::{self, http::mime::JSON, RequestBuilder, Response, StatusCode};
 
 pub fn do_borrow(
@@ -67,4 +69,26 @@ pub async fn get(server_addr: &str, id: &str) -> Response {
     .unwrap();
     assert!(r.status() == StatusCode::Ok);
     r
+}
+
+pub async fn list(server_addr: &str, query: Option<&str>) -> (String, Vec<BookPublic>) {
+    let mut response = {
+        if let Some(query) = query {
+            surf::get(format!(
+                concat!(server_root!(), books_route!()),
+                server_addr, query
+            ))
+        } else {
+            surf::get(format!(
+                concat!(server_root!(), books_route_root!()),
+                server_addr
+            ))
+        }
+    }
+    .await
+    .unwrap();
+    assert!(response.status() == StatusCode::Ok);
+    let str_body = response.body_string().await.unwrap();
+    let value = serde_json::from_str::<Vec<BookPublic>>(&str_body).unwrap();
+    (str_body, value)
 }

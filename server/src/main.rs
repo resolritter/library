@@ -5,12 +5,11 @@ mod migrations;
 mod resources;
 mod state;
 
-use crate::auth::auth_middleware;
 use crate::messages::ActorGroups;
 use crate::state::{Global, ServerState};
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
-use entities::{book_route, end_loan_route, lease_route};
+use entities::{book_route, books_route, books_route_root, end_loan_route, lease_route};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -216,12 +215,17 @@ fn root(
                 .at(format!(book_route!(), ":title").as_str())
                 .post(resources::book::post);
             server
+                .at(format!(books_route!(), ":query").as_str())
+                .get(resources::book::public_list);
+            server
+                .at(books_route_root!())
+                .get(resources::book::public_list);
+            server
                 .at(format!(
                     concat!(book_route!(), lease_route!(),),
                     ":title", ":lease_id"
                 )
                 .as_str())
-                .with(auth_middleware)
                 .post(resources::book::lease_book);
             server
                 .at(format!(
@@ -229,7 +233,6 @@ fn root(
                     ":title", ":lease_id"
                 )
                 .as_str())
-                .with(auth_middleware)
                 .patch(resources::book::end_loan);
 
             server

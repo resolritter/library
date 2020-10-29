@@ -207,3 +207,28 @@ async fn test_end_loan() {
 
     assert_snapshot!(read_snapshot(&log_dir));
 }
+
+#[async_std::test]
+async fn test_list() {
+    use entities::book;
+
+    let test_name = format_test_name(function_name!());
+    let tmp_dir = TempDir::new(&test_name).unwrap();
+    let SpawnedTest {
+        server_addr,
+        log_dir,
+        process: _,
+    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+
+    let (_, books) = book::list(&server_addr, None).await;
+    assert!(books.len() != 0);
+
+    let query = "Rapunzel";
+    let (_, filtered_books) = book::list(&server_addr, Some(query)).await;
+    assert!(filtered_books.len() != 0);
+    for book in filtered_books {
+        assert!(book.title.contains(query));
+    }
+
+    assert_snapshot!(read_snapshot(&log_dir));
+}

@@ -1,24 +1,17 @@
 use crate::resources::user::check_access_token;
 use crate::state::ServerState;
-use std::future::Future;
-use std::pin::Pin;
-use tide::StatusCode;
+use tide::{Request, StatusCode};
 
-pub fn auth_middleware<'a>(
-    req: tide::Request<ServerState>,
-    next: tide::Next<'a, ServerState>,
-) -> Pin<Box<dyn Future<Output = tide::Result> + 'a + Send>> {
-    Box::pin(async move {
-        match req.header("X-Auth") {
-            Some(token) => {
-                let result = check_access_token(token.as_str(), req.state().global.db_pool).await;
-                match result {
-                    Ok(true) => Ok(next.run(req).await),
-                    Ok(false) => Ok(tide::Response::new(StatusCode::Forbidden)),
-                    _ => Ok(tide::Response::new(StatusCode::InternalServerError)),
-                }
+pub async fn require_auth_token(req: &Request<ServerState>) -> (StatusCode, Option<String>) {
+    match req.header("X-Auth") {
+        Some(token) => {
+            let t = token.as_str();
+            match check_access_token(t, req.state().global.db_pool).await {
+                Ok(true) => (StatusCode::Ok, Some(t.to_string())),
+                Ok(false) => (StatusCode::Forbidden, Some(t.to_string())),
+                _ => (StatusCode::InternalServerError, Some(t.to_string())),
             }
-            _ => Ok(tide::Response::new(StatusCode::Forbidden)),
         }
-    })
+        _ => (StatusCode::Forbidden, None),
+    }
 }

@@ -1,0 +1,12 @@
+---
+source: server/tests/book.rs
+expression: read_snapshot(&log_dir)
+---
+BookPublicListPayload {
+    query: None,
+}
+BookPublicListPayload {
+    query: Some(
+        "Rapunzel",
+    ),
+}

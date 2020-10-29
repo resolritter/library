@@ -10,6 +10,7 @@ pub mod access_mask {
 }
 
 type LeaseBookId = String;
+type BookLeaseLength = i64;
 
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]
@@ -17,10 +18,12 @@ structout::generate!(
         pub id: i32,
         pub title: String,
         pub lease_id: Option<LeaseBookId>,
-        pub lease_until: Option<i64>,
-        pub lease_length: i64,
+        pub lease_until: Option<BookLeaseLength>,
+        pub lease_length: BookLeaseLength,
     } => {
         Book => [omit(lease_length)],
+        // 'lease_id' refers to the current borrower of the book, thus it'll be hidden
+        BookPublic => [omit(lease_length, lease_id)],
         BookGetByTitlePayload => [include(title)],
         BookLeaseByTitleRequestBody => [include(lease_length), upsert(pub lease_id: LeaseBookId)],
         BookEndLoanByTitlePayload => [include(title), upsert(pub lease_id: LeaseBookId, pub access_token: String)],
@@ -28,6 +31,10 @@ structout::generate!(
         BookLeaseByTitlePayload => [include(title, lease_length), upsert(pub lease_id: LeaseBookId)]
     }
 );
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BookPublicListPayload {
+    pub query: Option<String>,
+}
 
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]

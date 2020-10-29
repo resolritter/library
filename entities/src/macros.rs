@@ -11,6 +11,18 @@ macro_rules! book_route {
     };
 }
 #[macro_export]
+macro_rules! books_route {
+    () => {
+        "/books/{}"
+    };
+}
+#[macro_export]
+macro_rules! books_route_root {
+    () => {
+        "/books"
+    };
+}
+#[macro_export]
 macro_rules! lease_route {
     () => {
         "/lease/{}"
