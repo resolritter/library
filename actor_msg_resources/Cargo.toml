@@ -1,5 +1,5 @@
 [package]
-name = "resource_messaging"
+name = "actor_msg_resources"
 version = "0.1.0"
 authors = ["resolritter <resolritter@users.noreply.github.com>"]
 edition = "2018"

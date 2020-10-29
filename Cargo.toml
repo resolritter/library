@@ -6,5 +6,5 @@ members = [
   "test_utils",
   "actor_response_handler",
   "endpoint_actor",
-  "resource_messaging"
+  "actor_msg_resources"
 ]

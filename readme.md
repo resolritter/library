@@ -7,11 +7,11 @@
 2. [Why "Library"](#why-library)
 
     2.1 [User-facing server features](#product-features)
-    
+
     2.2 [Client features](#client-features)
-    
+
     2.3 [Infrastructural server features](#infrastructural-server-features)
-    
+
 3. [Technology stack](#tech-stack)
 
 4. [Installing and running](#installing-and-running)
@@ -22,16 +22,16 @@
 
     5.2. [entities](#entities-crate)
 
-    5.3. [resource_messaging](#resource_messaging)
+    5.3. [actor_msg_resources](#actor_msg_resources)
 
     5.4. [actor_response_handler](#actor_response_handler)
-    
+
     5.5. [Recap - Putting it all together](#recap)
-    
+
     5.6. [Finally, start the app](#start)
 
 6. [How testing is done](#how-testing-is-done)
-    
+
 7. [Missing for production](#missing-for-production)
 
 # Purpose  <a name="purpose"></a>
@@ -216,7 +216,7 @@ Resource simply is the entity (which is the data representation) as a "controlle
 
 The most basic and decoupled crate which primarily hosts the data-centric aspects of the application ([source](https://github.com/resolritter/library/blob/master/entities/src/data.rs)), hence the name "entities". The structures follow a naming pattern which is enforced by the macros, as it'll be told in the following sections.
 
-## resource_messaging <a name="resource_messaging"></a>
+## actor_msg_resources <a name="actor_msg_resources"></a>
 
 The **resource_messaging** ([definition](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/resource_messaging/src/lib.rs#L108) and [usage](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11)) macro has the following roles
 
@@ -228,11 +228,11 @@ The **resource_messaging** ([definition](https://github.com/resolritter/library/
 
 Relevantly, this macro enforces a predictable naming convention for messages. For instance, the following
 
-`resource_messaging::generate!(User, [(Login, User)])`
+`actor_msg_resources::generate!(User, [(Login, User)])`
 
 Specified as
 
-`resource_messaging::generate!(#ACTOR, [(#MESSAGE_VARIANT, #REPLY)])`
+`actor_msg_resources::generate!(#ACTOR, [(#MESSAGE_VARIANT, #REPLY)])`
 
 Expands to
 
@@ -242,7 +242,7 @@ Expands to
         pub payload: entities::UserLoginPayload,
         pub db_pool: &'static sqlx::PgPool,
     }
-    
+
     pub enum UserMsg {
         Login(UserLoginMsg),
     }
@@ -318,7 +318,7 @@ In general, if you were to expand the API, those would be the steps
 1. Edit the [messages](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11) module where you'll either add another `(#MESSAGE_VARIANT, #REPLY)` tuple to one of the existing actor definitions or create a new one.
 
 ```diff
-resource_messaging::generate!(
+actor_msg_resources::generate!(
     Book,
     [
 +       (Create, Book),
@@ -401,9 +401,9 @@ The [Server integration tests](#server-integration-tests) had a list of all the 
 
 Starting from the Bash script, `run.sh`. A command may have its dependencies ([example](https://github.com/resolritter/library/blob/53d7c0bf9aa5ba5f521dc7fb3ce9ecde2dcf6646/run.sh#L97)), same as if it were a Makefile; for instance, when logging is enabled, the logging folder has to be created before the program is run - that's just how the libraries work. The Bash script therefore serves as a wrapper and general way to configure and set up all the programs it can run.
 
-Integration tests need both a clean database and server instance in order to run. Accordingly, both need open ports to bind to, which is where `ss` comes in handy for figuring out which ports are currently in use. 
+Integration tests need both a clean database and server instance in order to run. Accordingly, both need open ports to bind to, which is where `ss` comes in handy for figuring out which ports are currently in use.
 
-For the database, spawn a dockerized PostgreSQL instance dedicated for tests with `run.sh test_db`. It's useful to have this container dedicated for tests in order to avoid accumulating test databases in the actual work instance, plus it also means that the volume can be completely discarded when the container is finished. The port being used will be written to `$TEST_DB_PORT_FILE`, a file which will be automatically read when the tests are ran. The databases used for integration tests will, therefore, be created in this specific instance. 
+For the database, spawn a dockerized PostgreSQL instance dedicated for tests with `run.sh test_db`. It's useful to have this container dedicated for tests in order to avoid accumulating test databases in the actual work instance, plus it also means that the volume can be completely discarded when the container is finished. The port being used will be written to `$TEST_DB_PORT_FILE`, a file which will be automatically read when the tests are ran. The databases used for integration tests will, therefore, be created in this specific instance.
 
 Perhaps the most odd is `memcached` daemon, which also needs to be running. This is because all tests are ran in parallel, therefore some test might want to spin up the server in a port which is already "taken" by another one. Synchronizing the reads (*is the port free?*) and writes (*I've acquired the port for the test*) is therefore done used `memcached` because the disk storage is, at least on my PC, not fast enough (another approach could've been to write/read the used ports to a file). Note that `ss` would not suffice here since it only lists ports *currently* being used, but due the tests starting all at the same with parallel execution, individual instances don't bind fast enough for it to be caught by `ss`; a "lock-and-reserve-ahead-of-time" mechanism on a in-memory database is, therefore, needed, since it doesn't suffer from unpredictable flushing and speed disadvantagens file disk access has.
 
@@ -415,7 +415,7 @@ Finally, when the tests need to be teared down, that's when the other utilities 
 
 # Missing for production <a name="missing-for-production"></a>
 
-This project doesn't aim to show much of what would be needed to have in a real-world application. 
+This project doesn't aim to show much of what would be needed to have in a real-world application.
 That being said, *if it were*, some things would obviously be missing, so they'll be listed here
 
 ## Completeness requirements
