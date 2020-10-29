@@ -1,3 +1,4 @@
+pub mod constants;
 pub mod format;
 pub mod path;
 pub mod port;
@@ -33,7 +34,10 @@ impl Drop for SpawnedTest {
     }
 }
 
-pub fn spawn_test_program(tmp_dir: &TempDir, admin_access_token: Option<String>) -> SpawnedTest {
+pub fn spawn_test_program(
+    tmp_dir: &TempDir,
+    admin_credentials: Option<(&str, &str)>,
+) -> SpawnedTest {
     let app_port = get_free_port();
     let app_dir = tmp_dir.path().to_str().unwrap();
     let instance = tmp_dir.path().extension().unwrap().to_str().unwrap();
@@ -64,10 +68,10 @@ pub fn spawn_test_program(tmp_dir: &TempDir, admin_access_token: Option<String>)
                 .arg("test_server")
         };
     }
-    let process = match admin_access_token {
-        Some(token) => server_builder!()
+    let process = match admin_credentials {
+        Some((email, access_token)) => server_builder!()
             .arg("--admin-credentials-for-test")
-            .arg(token)
+            .arg(format!("{}::{}", email, access_token))
             .spawn()
             .unwrap(),
         None => server_builder!().spawn().unwrap(),

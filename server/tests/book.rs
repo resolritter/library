@@ -3,11 +3,15 @@ use insta::assert_snapshot;
 use stdext::function_name;
 use surf::StatusCode;
 use tempdir::TempDir;
-use test_utils::{format::format_test_name, read_snapshot, spawn_test_program, SpawnedTest};
+use test_utils::{
+    constants::{ADMIN_ACCESS_TOKEN, ADMIN_EMAIL},
+    format::format_test_name,
+    read_snapshot, spawn_test_program, SpawnedTest,
+};
 
 #[async_std::test]
-async fn test_get() {
-    use entities::book;
+async fn test_create_and_get() {
+    use entities::{book, user, BookCreationPayload, UserCreationPayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -15,10 +19,48 @@ async fn test_get() {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir, None);
+    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
-    let mut get = book::get(&server_addr, "Rapunzel").await;
-    assert_snapshot!(test_name, get.body_string().await.unwrap());
+    let (_, normal_user) = user::create(
+        &server_addr,
+        &UserCreationPayload {
+            email: "normal@user.com".to_string(),
+            access_mask: access_mask::USER,
+            requester_access_token: None,
+        },
+    )
+    .await;
+    // A normal user is not able to create books
+    let bad_unauthorized_creation = book::do_post(
+        &server_addr,
+        &BookCreationPayload {
+            access_token: normal_user.access_token.to_string(),
+            title: "TEST".to_string(),
+        },
+    )
+    .await
+    .unwrap();
+    assert!(bad_unauthorized_creation.status() == StatusCode::Forbidden);
+
+    // Create a LIBRARIAN type of user for book creation
+    let (_, librarian) = user::create(
+        &server_addr,
+        &UserCreationPayload {
+            email: "librarian@user.com".to_string(),
+            access_mask: access_mask::LIBRARIAN,
+            requester_access_token: Some(ADMIN_ACCESS_TOKEN.to_string()),
+        },
+    )
+    .await;
+    let (_, new_book) = book::post(
+        &server_addr,
+        &BookCreationPayload {
+            access_token: librarian.access_token.to_string(),
+            title: "TEST".to_string(),
+        },
+    )
+    .await;
+    book::get(&server_addr, &new_book.title).await;
 
     assert_snapshot!(read_snapshot(&log_dir));
 }
@@ -67,7 +109,7 @@ async fn test_lease() {
             .unwrap()
     );
 
-    // The book has been leased successfully, thus the following should not work
+    // The book is already leased to somebody, thus the following should not work
     let bad_borrow = book::do_borrow(&server_addr, &first_user.access_token, &payload)
         .await
         .unwrap();
@@ -84,16 +126,11 @@ async fn test_end_loan() {
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
-    let admin_access_token = "ADMIN";
-    let admin_email = "admin@admin.com";
     let SpawnedTest {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(
-        &tmp_dir,
-        Some(format!("{}::{}", admin_email, admin_access_token)),
-    );
+    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
     let (_, first_user) = user::create(
@@ -154,7 +191,7 @@ async fn test_end_loan() {
         &UserCreationPayload {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
-            requester_access_token: Some(admin_access_token.to_string()),
+            requester_access_token: Some(ADMIN_ACCESS_TOKEN.to_string()),
         },
     )
     .await;

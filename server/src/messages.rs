@@ -15,6 +15,7 @@ resource_messaging::generate!(
         (LeaseByTitle, String),
         (GetByTitle, Book),
         (EndLoanByTitle, ()),
+        (Creation, Book),
     ]
 );
 
@@ -24,6 +25,7 @@ impl Loggable for BookMsg {
             BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::LeaseByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::EndLoanByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::Creation(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

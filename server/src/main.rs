@@ -213,6 +213,9 @@ fn root(
                 .at(format!(book_route!(), ":title").as_str())
                 .get(resources::book::get);
             server
+                .at(format!(book_route!(), ":title").as_str())
+                .post(resources::book::post);
+            server
                 .at(format!(
                     concat!(book_route!(), lease_route!(),),
                     ":title", ":lease_id"

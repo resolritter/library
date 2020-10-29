@@ -1,0 +1,28 @@
+---
+source: server/tests/book.rs
+expression: read_snapshot(&log_dir)
+---
+UserCreationPayload {
+    email: "normal@user.com",
+    access_mask: 1,
+    requester_access_token: None,
+}
+BookCreationPayload {
+    title: "TEST",
+    access_token: "normal@user.com",
+}
+UserCreationPayload {
+    email: "librarian@user.com",
+    access_mask: 17,
+    requester_access_token: Some(
+        "admin_access_token",
+    ),
+}
+BookCreationPayload {
+    title: "TEST",
+    access_token: "librarian@user.com",
+}
+BookGetByTitlePayload {
+    title: "TEST",
+}
+

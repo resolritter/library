@@ -24,6 +24,7 @@ structout::generate!(
         BookGetByTitlePayload => [include(title)],
         BookLeaseByTitleRequestBody => [include(lease_length), upsert(pub lease_id: LeaseBookId)],
         BookEndLoanByTitlePayload => [include(title), upsert(pub lease_id: LeaseBookId, pub access_token: String)],
+        BookCreationPayload => [include(title), upsert(pub access_token: String)],
         BookLeaseByTitlePayload => [include(title, lease_length), upsert(pub lease_id: LeaseBookId)]
     }
 );

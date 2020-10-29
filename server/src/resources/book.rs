@@ -1,10 +1,12 @@
-use crate::messages::{BookEndLoanByTitleMsg, BookGetByTitleMsg, BookLeaseByTitleMsg};
+use crate::messages::{
+    BookCreationMsg, BookEndLoanByTitleMsg, BookGetByTitleMsg, BookLeaseByTitleMsg,
+};
 use crate::resources::user::check_access_mask;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
-    access_mask, Book, BookEndLoanByTitlePayload, BookGetByTitlePayload, BookLeaseByTitlePayload,
-    BookLeaseByTitleRequestBody,
+    access_mask, Book, BookCreationPayload, BookEndLoanByTitlePayload, BookGetByTitlePayload,
+    BookLeaseByTitlePayload, BookLeaseByTitleRequestBody,
 };
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
@@ -105,6 +107,36 @@ actor_response_handler::generate!(Config {
 });
 
 #[inline(always)]
+pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::Error> {
+    let is_authorized = check_access_mask(
+        &msg.payload.access_token,
+        access_mask::LIBRARIAN,
+        msg.db_pool,
+    )
+    .await?;
+
+    if !is_authorized {
+        return Ok(ResponseData(StatusCode::Forbidden, None));
+    }
+
+    let row = sqlx::query("INSERT INTO book (title) VALUES ($1) RETURNING *")
+        .bind(&msg.payload.title)
+        .fetch_one(msg.db_pool)
+        .await?;
+    Ok(ResponseData(StatusCode::Created, Some(from_row(&row)?)))
+}
+#[inline(always)]
+async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
+    Ok(req.body_json::<BookCreationPayload>().await?)
+}
+actor_response_handler::generate!(Config {
+    name: post,
+    actor: Book,
+    response_type: Book,
+    tag: Creation
+});
+
+#[inline(always)]
 pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs(),
@@ -166,6 +198,7 @@ endpoint_actor::generate!({ actor: Book }, {
     GetByTitle: get_by_title,
     LeaseByTitle: lease_by_id,
     EndLoanByTitle: end_loan_by_title,
+    Creation: create,
 });
 
 pub async fn seed(pool: &PgPool) -> Vec<Book> {

@@ -6,7 +6,7 @@ UserCreationPayload {
     email: "librarian@user.com",
     access_mask: 17,
     requester_access_token: Some(
-        "ADMIN",
+        "admin_access_token",
     ),
 }
 UserCreationPayload {

@@ -3,23 +3,22 @@ use insta::assert_snapshot;
 use stdext::function_name;
 use surf::StatusCode;
 use tempdir::TempDir;
-use test_utils::{format::format_test_name, read_snapshot, spawn_test_program, SpawnedTest};
+use test_utils::{
+    constants::{ADMIN_ACCESS_TOKEN, ADMIN_EMAIL},
+    format::format_test_name,
+    read_snapshot, spawn_test_program, SpawnedTest,
+};
 
 #[async_std::test]
 async fn test_create_user() {
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
 
-    let admin_access_token = "ADMIN";
-    let admin_email = "admin@admin.com";
     let SpawnedTest {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(
-        &tmp_dir,
-        Some(format!("{}::{}", admin_email, admin_access_token)),
-    );
+    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     user::create(
         &server_addr,
@@ -27,7 +26,7 @@ async fn test_create_user() {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
             // Administrators can create librarians
-            requester_access_token: Some(admin_access_token.to_string()),
+            requester_access_token: Some(ADMIN_ACCESS_TOKEN.to_string()),
         },
     )
     .await;
