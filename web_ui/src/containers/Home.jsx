@@ -11,6 +11,7 @@ import {
   Typography,
   withStyles,
 } from "@material-ui/core"
+import sortBy from "lodash-es/sortBy"
 import { useSnackbar } from "notistack"
 import { useSelector } from "react-redux"
 
@@ -33,7 +34,7 @@ export function Home() {
     return profile
   })
   const books = useSelector(function ({ book: { items } }) {
-    return items
+    return sortBy(items, "title")
   })
   const errorToSnackbar = React.useMemo(
     function () {
