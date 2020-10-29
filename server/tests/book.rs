@@ -121,7 +121,7 @@ async fn test_borrow() {
 #[async_std::test]
 async fn test_end_borrow() {
     use entities::{
-        book, user, BookEndBorrowByTitlePayload, BookBorrowByTitlePayload, UserCreationPayload,
+        book, user, BookBorrowByTitlePayload, BookEndBorrowByTitlePayload, UserCreationPayload,
     };
 
     let test_name = format_test_name(function_name!());
@@ -163,7 +163,6 @@ async fn test_end_borrow() {
     // The second user won't be able to end the borrow on behalf of the first
     let mut end_borrow_payload = BookEndBorrowByTitlePayload {
         title: borrow_payload.title.clone(),
-        borrow_id: borrow_payload.borrow_id.clone(),
         access_token: second_user.access_token.to_string(),
     };
     let bad_forbidden_end_borrow = book::do_end_borrow(&server_addr, &end_borrow_payload)
@@ -199,7 +198,6 @@ async fn test_end_borrow() {
         &server_addr,
         &BookEndBorrowByTitlePayload {
             title: borrow_payload.title.clone(),
-            borrow_id: borrow_payload.borrow_id.clone(),
             access_token: librarian_user.access_token.to_string(),
         },
     )

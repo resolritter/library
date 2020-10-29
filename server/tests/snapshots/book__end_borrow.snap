@@ -19,12 +19,10 @@ BookBorrowByTitlePayload {
 }
 BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    borrow_id: "first@user.com",
     access_token: "second@user.com",
 }
 BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    borrow_id: "first@user.com",
     access_token: "first@user.com",
 }
 BookBorrowByTitlePayload {
@@ -41,6 +39,5 @@ UserCreationPayload {
 }
 BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    borrow_id: "second@user.com",
     access_token: "librarian@user.com",
 }

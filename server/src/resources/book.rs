@@ -82,7 +82,6 @@ async fn extract_end_borrow(
             match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {
                 Ok(title) => Ok(BookEndBorrowByTitlePayload {
                     title: title.to_string(),
-                    borrow_id: req.param("borrow_id")?,
                     access_token,
                 }),
                 _ => Err(tide::Error::from_str(
