@@ -13,7 +13,7 @@ import { useSelector } from "react-redux"
 
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
-import { routes, userUIAccessLevels } from "src/constants"
+import { routes, userAPIAccessLevels, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
@@ -69,22 +69,30 @@ export function CreateUser() {
                   required
                 />
               </FormControl>
-              <FormControl fullWidth>
-                <InputLabel id="access_level_label">Access level</InputLabel>
-                <Select
-                  value={accessLevel}
-                  onChange={function (ev) {
-                    setAccessLevel(ev.target.value)
-                  }}
-                  labelId="access_level_label"
-                >
-                  <MenuItem value={""}>None</MenuItem>
-                  <MenuItem value={userUIAccessLevels.librarian}>
-                    Librarian
-                  </MenuItem>
-                  <MenuItem value={userUIAccessLevels.admin}>Admin</MenuItem>
-                </Select>
-              </FormControl>
+              {user?.access_mask === userAPIAccessLevels.admin && (
+                <>
+                  <FormControl key="access_level" fullWidth>
+                    <InputLabel id="access_level_label">
+                      Access level
+                    </InputLabel>
+                    <Select
+                      value={accessLevel}
+                      onChange={function (ev) {
+                        setAccessLevel(ev.target.value)
+                      }}
+                      labelId="access_level_label"
+                    >
+                      <MenuItem value={""}>None</MenuItem>
+                      <MenuItem value={userUIAccessLevels.librarian}>
+                        Librarian
+                      </MenuItem>
+                      <MenuItem value={userUIAccessLevels.admin}>
+                        Admin
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                </>
+              )}
               <ButtonRow fullWidth>
                 <LoadingSubmitButton isLoading={false} />
               </ButtonRow>

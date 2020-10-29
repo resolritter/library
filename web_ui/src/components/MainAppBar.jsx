@@ -5,7 +5,7 @@ import Button from "@material-ui/core/Button"
 import Toolbar from "@material-ui/core/Toolbar"
 import { useDispatch, useSelector } from "react-redux"
 
-import { routes } from "src/constants"
+import { routes, userAPIAccessLevels } from "src/constants"
 import { history } from "src/setup"
 import userStore from "src/store/user"
 
@@ -62,16 +62,20 @@ export const MainAppBar = function () {
               </Button>
             </>
           )}
-          <ButtonGap />
-          <Button
-            onClick={function () {
-              history.push(routes.createUser())
-            }}
-            variant="contained"
-            color="primary"
-          >
-            Create user
-          </Button>
+          {(!user || user.access_mask === userAPIAccessLevels.admin) && (
+            <>
+              <ButtonGap />
+              <Button
+                onClick={function () {
+                  history.push(routes.createUser())
+                }}
+                variant="contained"
+                color="primary"
+              >
+                Create user
+              </Button>
+            </>
+          )}
         </Box>
       </Toolbar>
     </AppBar>
