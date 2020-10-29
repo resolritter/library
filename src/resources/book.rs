@@ -2,7 +2,8 @@ use crate::entities::{Book, BookSeed, GetBookByTitlePayload, ServerState};
 use crate::logging::logged;
 use crate::messages::{ActorGroups, BookMsg, BookMsg::*, GetBookByTitleMsg, BOOK};
 use crate::{actor_lookup_response, actor_send};
-use bastion::prelude::*;
+use bastion::prelude::Children;
+use log::error;
 use sqlx::Row;
 use sqlx::{postgres::PgRow, PgPool};
 use tide::{Request, Response};
@@ -15,10 +16,10 @@ pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
 }
 
 #[inline(always)]
-pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Result<Option<Book>, sqlx::Error> {
+pub async fn fetch_one_by_title(msg: &GetBookByTitleMsg) -> Result<Option<Book>, sqlx::Error> {
     let raw = sqlx::query("SELECT * FROM Book WHERE title=$1")
-        .bind(title)
-        .fetch_optional(pool)
+        .bind(&msg.payload.title)
+        .fetch_optional(msg.db_pool)
         .await?;
 
     if let Some(row) = raw {
@@ -46,41 +47,7 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
     actor_lookup_response!(r, Book)
 }
 
-pub fn actor(children: Children) -> Children {
-    children
-        .with_name(ActorGroups::Book.as_ref())
-        .with_exec(move |_| async move {
-            let (channel, r) = crossbeam_channel::unbounded::<BookMsg>();
-            {
-                let mut lock = BOOK.get().unwrap().write();
-                *lock = Some(channel);
-            }
-            println!("Book actor is ready!");
-
-            loop {
-                match logged(r.recv().unwrap()) {
-                    GetByTitle(GetBookByTitleMsg {
-                        reply,
-                        payload,
-                        db_pool,
-                    }) => {
-                        let _ =
-                            reply.send(match fetch_one_by_title(db_pool, &payload.title).await {
-                                Ok(output) => output,
-                                err => {
-                                    // TODO: implement logging
-                                    println!("{:#?}", err);
-                                    None
-                                }
-                            });
-                    }
-                }
-            }
-
-            #[allow(unreachable_code)]
-            Ok(())
-        })
-}
+endpoint_actor::generate!({ actor: Book }, { GetByTitle: fetch_one_by_title });
 
 pub fn seed_entities() -> [BookSeed; 3] {
     [

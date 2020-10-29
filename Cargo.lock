@@ -753,6 +753,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
+name = "endpoint_actor"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1211,6 +1220,7 @@ dependencies = [
  "async-std",
  "bastion",
  "crossbeam-channel 0.5.0",
+ "endpoint_actor",
  "flexi_logger",
  "log",
  "once_cell",
