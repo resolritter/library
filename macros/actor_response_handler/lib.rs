@@ -41,8 +41,6 @@ impl Parse for Definition {
 
 struct Configuration {
     #[allow(dead_code)]
-    conf_marker: Ident,
-    #[allow(dead_code)]
     brace: token::Brace,
     definitions: Punctuated<Definition, Token![,]>,
 }
@@ -52,7 +50,6 @@ impl Parse for Configuration {
         let definitions;
 
         Ok(Self {
-            conf_marker: input.parse()?,
             brace: braced!(definitions in input),
             definitions: definitions.parse_terminated(Definition::parse)?,
         })
