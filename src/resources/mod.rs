@@ -51,15 +51,13 @@ macro_rules! actor_lookup_response {
 #[macro_export]
 macro_rules! actor_send {
     ($name: ident, $payload: expr $(,)?) => {
-        unsafe {
-            $name
-                .get()
-                .unwrap()
-                .read()
-                .as_ref()
-                .unwrap()
-                .send($payload)
-                .unwrap();
-        }
+        $name
+            .get()
+            .unwrap()
+            .read()
+            .as_ref()
+            .unwrap()
+            .send($payload)
+            .unwrap();
     };
 }

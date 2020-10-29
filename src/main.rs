@@ -62,9 +62,7 @@ async fn main() {
         .unwrap();
 
     // Initialize the actors
-    unsafe {
-        init_actors!(BOOK);
-    }
+    init_actors!(BOOK);
 
     // Initialize the supervision tree
     Bastion::init();

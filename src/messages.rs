@@ -35,5 +35,5 @@ impl Loggable for BookMsg {
     }
 }
 
-pub static mut BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookMsg>>>> =
+pub static BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookMsg>>>> =
     OnceCell::new();

@@ -51,7 +51,7 @@ pub fn actor(children: Children) -> Children {
         .with_name(ActorGroups::Book.as_ref())
         .with_exec(move |_| async move {
             let (channel, r) = crossbeam_channel::unbounded::<BookMsg>();
-            unsafe {
+            {
                 let mut lock = BOOK.get().unwrap().write();
                 *lock = Some(channel);
             }
