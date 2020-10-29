@@ -1,0 +1,8 @@
+# build
+public/
+
+# node
+node_modules/
+
+# linaria
+/.linaria-cache
