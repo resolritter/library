@@ -1,0 +1,17 @@
+{
+  "CreateUser": {
+    "id": "CreateUser",
+    "Email": {
+      "id": "CreateUser.Email"
+    }
+  },
+  "AppBar": {
+    "id": "AppBar",
+    "CreateUser": {
+      "id": "AppBar.CreateUser"
+    },
+    "Login": {
+      "id": "AppBar.Login"
+    }
+  }
+}

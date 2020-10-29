@@ -1,0 +1,16 @@
+{
+  "name": "e2e",
+  "scripts": {
+    "start": "cypress open",
+    "test": "cypress run"
+  },
+  "author": "bas@basarat.com",
+  "license": "MIT",
+  "dependencies": {
+    "@cypress/webpack-preprocessor": "5.4.8",
+    "cypress": "5.4.0",
+    "ts-loader": "8.0.7",
+    "typescript": "4.0.3",
+    "webpack": "5.2.0"
+  }
+}

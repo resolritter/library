@@ -15,6 +15,7 @@ import { ButtonRow, Column, ColumnTitle } from "src/components/Form"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes, userAPIAccessLevels, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
+import label from "src/labels.json"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
 import { promiseToSnackbar } from "src/utils"
@@ -83,6 +84,7 @@ export function CreateUser() {
                     setEmail(ev.target.value)
                   }}
                   placeholder={"user@mail.com"}
+                  aria-label={label.CreateUser.Email.id}
                   autoFocus
                   required
                 />

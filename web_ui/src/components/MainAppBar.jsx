@@ -6,6 +6,7 @@ import Toolbar from "@material-ui/core/Toolbar"
 import { useDispatch, useSelector } from "react-redux"
 
 import { routes, userAPIAccessLevels } from "src/constants"
+import label from "src/labels.json"
 import { history } from "src/setup"
 import userStore from "src/store/user"
 import { flexCenteredRow } from "src/styles"
@@ -56,6 +57,7 @@ export const MainAppBar = function () {
               <ButtonGap separator={"•"} />
               <ButtonGap />
               <Button
+                aria-label={label.AppBar.CreateUser.id}
                 onClick={function () {
                   history.push(routes.createUser())
                 }}
@@ -78,6 +80,7 @@ export const MainAppBar = function () {
                 history.push(routes.login())
               }}
               variant="contained"
+              aria-label={label.AppBar.Login.id}
             >
               Login
             </Button>
