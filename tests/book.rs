@@ -21,7 +21,7 @@ async fn test_get() -> std::io::Result<()> {
     // Check that a book exists and can be retrieved from the API
     let book_route = format!("{}/book/Rapunzel", &server_addr);
     let mut get = surf::get(book_route).await.unwrap();
-    assert!(get.status() == 200);
+    assert!(get.status() == StatusCode::Ok);
     assert_snapshot!(test_name, get.body_string().await.unwrap());
 
     assert_snapshot!(read_snapshot(&log_dir));

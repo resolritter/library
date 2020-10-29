@@ -1,9 +1,9 @@
 pub fn migration() -> String {
     (r###"
      CREATE TABLE public."user" (
-         id serial NOT NULL,
-         username varchar(32) NOT NULL,
-         CONSTRAINT user_pk PRIMARY KEY (id)
+         email varchar(256) NOT NULL,
+         access_level int4 NULL DEFAULT 0,
+         CONSTRAINT user_pk PRIMARY KEY (email)
      );
      "###)
         .to_string()

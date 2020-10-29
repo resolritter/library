@@ -1,0 +1,5 @@
+---
+source: tests/user.rs
+expression: should_work.body_string().await.unwrap()
+---
+{"data":{"access_level":0,"email":"user@user.com"}}

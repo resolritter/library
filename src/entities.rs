@@ -10,10 +10,6 @@ pub struct ServerState {
     pub global: &'static Global,
 }
 
-pub struct EntityId {
-    id: i32,
-}
-
 structout::generate!(
     pub <> {
         pub id: i32,
@@ -30,15 +26,14 @@ structout::generate!(
     }
 );
 
+// TODO add password to user login
+// TODO implement middleware for access levels
 structout::generate!(
     pub <> {
-        pub id: i32,
         pub email: String,
-        pub password: String,
         pub access_level: i32
     } => {
-        UserPublic => [attr(#[derive(Serialize, Debug)]), omit(password)],
-        UserLoginPayload => [attr(#[derive(Deserialize, Debug)]), include(email), include(password)],
-        UserCreationPayload => [attr(#[derive(Deserialize, Debug)]), omit(id)],
+        UserPublic => [attr(#[derive(Serialize, Debug)])],
+        UserCreationPayload => [attr(#[derive(Deserialize, Debug)])],
     }
 );

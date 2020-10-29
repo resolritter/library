@@ -2,10 +2,7 @@ use crate::entities::{
     Book, BookGetByTitlePayload, BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookSeed,
     ServerState,
 };
-use crate::logging::logged;
-use crate::messages::{
-    ActorGroups, BookGetByTitleMsg, BookLeaseByTitleMsg, BookMsg, BookMsg::*, BOOK,
-};
+use crate::messages::{BookGetByTitleMsg, BookLeaseByTitleMsg};
 use crate::resources::ResponseData;
 use sqlx::{postgres::PgRow, PgPool};
 use sqlx::{Done, Row};

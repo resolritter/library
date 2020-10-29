@@ -91,8 +91,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
         |Delegation {
              variant, function, ..
          }| {
+            let actor_msg = Ident::new(format!("{}Msg", &actor_name).as_str(), Span::call_site());
+
             quote! {
-                #variant(msg) => {
+                crate::messages::#actor_msg::#variant(msg) => {
                     let _ =
                         msg.reply.send(match #function(&msg).await {
                             Ok(output) => Some(output),
@@ -109,16 +111,16 @@ pub fn generate(input: TokenStream) -> TokenStream {
     (quote! {
         pub fn actor(children: bastion::prelude::Children) -> bastion::prelude::Children {
             children
-                .with_name(ActorGroups::#actor.as_ref())
+                .with_name(crate::messages::ActorGroups::#actor.as_ref())
                 .with_exec(move |_| async move {
-                    let (channel, r) = crossbeam_channel::unbounded::<#actor_msg>();
+                    let (channel, r) = crossbeam_channel::unbounded::<crate::messages::#actor_msg>();
                     {
-                        let mut lock = #actor_lock.get().unwrap().write();
+                        let mut lock = crate::messages::#actor_lock.get().unwrap().write();
                         *lock = Some(channel);
                     }
 
                     loop {
-                        match logged(r.recv().unwrap()) {
+                        match crate::logging::logged(r.recv().unwrap()) {
                             #(#matches),*
                         }
                     }

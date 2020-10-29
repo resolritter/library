@@ -4,7 +4,7 @@ mod messages;
 mod migrations;
 mod resources;
 
-use crate::messages::{ActorGroups, BOOK};
+use crate::messages::ActorGroups;
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
 use entities::{Global, ServerState};
@@ -26,8 +26,16 @@ macro_rules! staticfy {
 }
 
 macro_rules! init_actors {
-    ($($actors: ident),+) => {
-        $($actors)+.set(staticfy!(RwLock::new(None))).unwrap();
+    ($actor:ident) => {
+        crate::messages::$actor
+            .set(staticfy!(RwLock::new(None)))
+            .unwrap();
+    };
+    ($actor: ident, $($actors: ident),+) => {
+        crate::messages::$actor
+            .set(staticfy!(RwLock::new(None)))
+            .unwrap();
+        init_actors!($($actors),+);
     };
 }
 
@@ -141,7 +149,7 @@ async fn main() {
     GLOBAL.set(staticfy!(Global { db_pool })).unwrap();
 
     // Initialize the actors
-    init_actors!(BOOK);
+    init_actors!(BOOK, USER);
 
     // Initialize the supervision tree
     let listen_addr: &'static str =
@@ -154,6 +162,7 @@ async fn main() {
         };
     Bastion::init();
     Bastion::supervisor(|sup| sup.children(resources::book::actor))
+        .and_then(|_| Bastion::supervisor(|sup| sup.children(resources::user::actor)))
         .and_then(|_| {
             Bastion::supervisor(|sup| sup.children(|child| root(child, listen_addr, signal_file)))
         })
@@ -189,7 +198,6 @@ fn root(
             server.at("/book/:title").patch(resources::book::lease_book);
 
             server.at("/user").post(resources::user::post);
-            //server.at("/auth/:id").post(resources::user::auth);
 
             let server_handle = async_std::task::spawn(server.listen(listen_addr));
             if let Some(signal_file) = signal_file {
