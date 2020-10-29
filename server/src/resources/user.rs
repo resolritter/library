@@ -81,7 +81,7 @@ pub async fn create(
     )
     .bind(&msg.payload.email)
     .bind(&msg.payload.access_mask)
-    // TODO have an actual access token generation strategy
+    // FIXME have an actual access token generation strategy
     .bind(&msg.payload.email)
     .fetch_one(msg.db_pool)
     .await;

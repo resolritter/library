@@ -51,7 +51,7 @@ structout::generate!(
     } => {
         User => [],
         UserCreatePayload => [omit(access_token), upsert(pub requester_access_token: Option<String>)],
-        // TODO auth should support password as well
+        // FIXME auth should support password as well
         UserLoginPayload => [include(email)],
     }
 );
