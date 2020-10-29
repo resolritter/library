@@ -24,13 +24,13 @@ define_message!(GetBookByTitleMsg, Option<Book>, GetBookByTitlePayload);
 
 #[derive(Debug)]
 pub enum BookMsg {
-    GetByTitle(GetBookByTitleMsg),
+    GetBookByTitle(GetBookByTitleMsg),
 }
 
 impl Loggable for BookMsg {
     fn to_log(&self) -> String {
         match self {
-            BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::GetBookByTitle(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

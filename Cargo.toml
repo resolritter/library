@@ -25,3 +25,4 @@ strum_macros = "0.19"
 parking_lot = "0.11"
 structout = { path = "../structout" }
 endpoint_actor = { path = "./macros/endpoint_actor" }
+respond_with_actor = { path = "./macros/respond_with_actor" }
