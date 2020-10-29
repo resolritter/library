@@ -9,13 +9,21 @@ pub enum ActorGroups {
 }
 
 resource_messaging::generate!(User, [(Creation, UserPublic)]);
-resource_messaging::generate!(Book, [(LeaseByTitle, String), (GetByTitle, Book)]);
+resource_messaging::generate!(
+    Book,
+    [
+        (LeaseByTitle, String),
+        (GetByTitle, Book),
+        (EndLoanByTitle, ()),
+    ]
+);
 
 impl Loggable for BookMsg {
     fn to_log(&self) -> String {
         match self {
             BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::LeaseByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::EndLoanByTitle(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

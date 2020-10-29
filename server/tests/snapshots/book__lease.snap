@@ -4,7 +4,7 @@ expression: read_snapshot(&log_dir)
 ---
 UserCreationPayload {
     email: "simple@user.com",
-    access_level: 1,
+    access_mask: 1,
     requester_access_token: None,
 }
 BookLeaseByTitlePayload {

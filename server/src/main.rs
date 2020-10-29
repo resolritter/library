@@ -10,7 +10,7 @@ use crate::messages::ActorGroups;
 use crate::state::{Global, ServerState};
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
-use entities::{book_route, lease_route};
+use entities::{book_route, end_loan_route, lease_route};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -219,7 +219,15 @@ fn root(
                 )
                 .as_str())
                 .with(auth_middleware)
-                .patch(resources::book::lease_book);
+                .post(resources::book::lease_book);
+            server
+                .at(format!(
+                    concat!(book_route!(), end_loan_route!(),),
+                    ":title", ":lease_id"
+                )
+                .as_str())
+                .with(auth_middleware)
+                .patch(resources::book::end_loan);
 
             server
                 .at(entities::user::USER_ROUTE)
@@ -258,8 +266,8 @@ async fn setup_database(
         resources::book::seed(db_pool).await;
         if let Some(email_and_token) = admin_credentials_for_test {
             let parts: Vec<&str> = email_and_token.split("::").collect();
-            let email = parts.iter().nth(0).unwrap();
-            let token = parts.iter().nth(1).unwrap();
+            let email = parts.get(0).unwrap();
+            let token = parts.get(1).unwrap();
             resources::user::create_super_user(*email, *token, db_pool)
                 .await
                 .unwrap();

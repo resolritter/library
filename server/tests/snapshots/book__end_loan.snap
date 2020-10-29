@@ -1,0 +1,47 @@
+---
+source: server/tests/book.rs
+expression: read_snapshot(&log_dir)
+---
+UserCreationPayload {
+    email: "first@user.com",
+    access_mask: 1,
+    requester_access_token: None,
+}
+UserCreationPayload {
+    email: "second@user.com",
+    access_mask: 1,
+    requester_access_token: None,
+}
+BookLeaseByTitlePayload {
+    title: "Rapunzel",
+    lease_id_req: "first@user.com",
+    lease_length: 86400,
+}
+BookEndLoanByTitlePayload {
+    title: "Rapunzel",
+    lease_id_req: "first@user.com",
+    access_token_req: "second@user.com",
+}
+BookEndLoanByTitlePayload {
+    title: "Rapunzel",
+    lease_id_req: "first@user.com",
+    access_token_req: "first@user.com",
+}
+BookLeaseByTitlePayload {
+    title: "Rapunzel",
+    lease_id_req: "second@user.com",
+    lease_length: 86400,
+}
+UserCreationPayload {
+    email: "librarian@user.com",
+    access_mask: 17,
+    requester_access_token: Some(
+        "ADMIN",
+    ),
+}
+BookEndLoanByTitlePayload {
+    title: "Rapunzel",
+    lease_id_req: "second@user.com",
+    access_token_req: "librarian@user.com",
+}
+

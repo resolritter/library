@@ -1,4 +1,4 @@
-use entities::{access_level, user, UserCreationPayload};
+use entities::{access_mask, user, UserCreationPayload};
 use insta::assert_snapshot;
 use stdext::function_name;
 use surf::StatusCode;
@@ -10,7 +10,6 @@ async fn test_create_user() {
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
 
-    // Calling the test server with those credentials will create a superuser at the start
     let admin_access_token = "ADMIN";
     let admin_email = "admin@admin.com";
     let SpawnedTest {
@@ -26,7 +25,7 @@ async fn test_create_user() {
         &server_addr,
         &UserCreationPayload {
             email: "librarian@user.com".to_string(),
-            access_level: access_level::LIBRARIAN,
+            access_mask: access_mask::LIBRARIAN,
             // Administrators can create librarians
             requester_access_token: Some(admin_access_token.to_string()),
         },
@@ -36,7 +35,7 @@ async fn test_create_user() {
         &server_addr,
         &UserCreationPayload {
             email: "simple@user.com".to_string(),
-            access_level: access_level::USER,
+            access_mask: access_mask::USER,
             // Normal user creation does not require any sort of special access
             requester_access_token: None,
         },
@@ -48,7 +47,7 @@ async fn test_create_user() {
         &server_addr,
         &UserCreationPayload {
             email: "new_ADMIN@user.com".to_string(),
-            access_level: access_level::ADMIN,
+            access_mask: access_mask::ADMIN,
             requester_access_token: Some(simple_user.access_token.clone()),
         },
     )
@@ -58,7 +57,7 @@ async fn test_create_user() {
         &server_addr,
         &UserCreationPayload {
             email: "new_LIBRARIAN@user.com".to_string(),
-            access_level: access_level::LIBRARIAN,
+            access_mask: access_mask::LIBRARIAN,
             requester_access_token: Some(simple_user.access_token.clone()),
         },
     )

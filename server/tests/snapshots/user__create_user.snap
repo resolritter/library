@@ -4,26 +4,26 @@ expression: read_snapshot(&log_dir)
 ---
 UserCreationPayload {
     email: "librarian@user.com",
-    access_level: 17,
+    access_mask: 17,
     requester_access_token: Some(
         "ADMIN",
     ),
 }
 UserCreationPayload {
     email: "simple@user.com",
-    access_level: 1,
+    access_mask: 1,
     requester_access_token: None,
 }
 UserCreationPayload {
     email: "new_ADMIN@user.com",
-    access_level: 273,
+    access_mask: 273,
     requester_access_token: Some(
         "simple@user.com",
     ),
 }
 UserCreationPayload {
     email: "new_LIBRARIAN@user.com",
-    access_level: 17,
+    access_mask: 17,
     requester_access_token: Some(
         "simple@user.com",
     ),
