@@ -4,11 +4,10 @@ mod resources;
 
 use crate::messages::ActorGroups;
 use bastion::prelude::*;
-use entities::{App, ServerState};
+use entities::{App, Config, ServerState};
 use once_cell::sync::OnceCell;
-use sqlx::postgres::PgPoolOptions;
-
-use std::env;
+use sqlx::postgres::{PgPool, PgPoolOptions};
+use std::sync::Arc;
 
 use tide::http::headers::HeaderValue;
 use tide::security::CorsMiddleware;
@@ -26,31 +25,41 @@ fn main() {
   Bastion::block_until_stopped();
 }
 
-static APP: OnceCell<App> = OnceCell::new();
-static BASTION: OnceCell<BastionContext> = OnceCell::new();
+static mut APP: OnceCell<&'static Arc<&'static App>> = OnceCell::new();
+static CONFIG: OnceCell<Config> = OnceCell::new();
+
+fn initialize_config_once() -> &'static Config {
+  let _ = CONFIG.set(Config {
+    db_url: std::env::var("DB_URL").unwrap(),
+  });
+  CONFIG.get().unwrap()
+}
 
 fn root(children: Children) -> Children {
-  children.with_name(ActorGroups::Input.as_ref()).with_exec(
-    move |bastion: BastionContext| async move {
-      // if the supervisor has to restart for some reason, put the new instance behind the cell
-      if let Err(bastion) = BASTION.set(bastion) {
-        BASTION.take();
-        BASTION.set(bastion).unwrap();
-      }
+  let Config { db_url } = initialize_config_once();
 
-      let db_pool = PgPoolOptions::new()
-        .connect(&env::var("DATABASE_URL").unwrap())
-        .await
-        .unwrap();
-      APP
-        .set(App {
-          db_pool,
-          bastion: BASTION.get().unwrap(),
+  children.with_name(ActorGroups::Input.as_ref()).with_exec(
+    move |bastion_ctx: BastionContext| async move {
+      let bastion_ptr: &'static BastionContext = Box::leak(Box::new(Arc::new(bastion_ctx)));
+      let bastion: &'static Arc<&'static BastionContext> =
+        Box::leak(Box::new(Arc::new(bastion_ptr)));
+      let db_pool_ptr: &'static PgPool = Box::leak(Box::new(
+        PgPoolOptions::new().connect(&db_url).await.unwrap(),
+      ));
+      let db_pool: &'static Arc<&'static PgPool> = &*Box::leak(Box::new(Arc::new(db_pool_ptr)));
+
+      let app_ptr: &'static App = &*Box::leak(Box::new(App { db_pool, bastion }));
+      let app: &'static Arc<&'static App> = Box::leak(Box::new(Arc::new(app_ptr)));
+
+      let mut server = unsafe {
+        if let Err(app) = APP.set(app) {
+          APP.take();
+          APP.set(app).unwrap();
+        }
+        Server::with_state(ServerState {
+          app: APP.get().unwrap(),
         })
-        .unwrap();
-      let mut server = Server::with_state(ServerState {
-        app: APP.get().unwrap(),
-      });
+      };
 
       server.with(
         CorsMiddleware::new()
@@ -65,7 +74,9 @@ fn root(children: Children) -> Children {
       // Book routes
       server.at("/book/:title").get(resources::book::get);
 
-      server.listen("127.0.0.1:8080").await.unwrap();
+      let listen_addr = "127.0.0.1:8080";
+      println!("Web server listening at {}", listen_addr);
+      server.listen(listen_addr).await.unwrap();
 
       Ok(())
     },

@@ -20,8 +20,10 @@ pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Option<Book> {
     })
 }
 
-pub async fn get(mut req: Request<ServerState>) -> tide::Result<Response> {
-  let payload: BookGet = req.body_json().await?;
+pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
+  let payload = BookGet {
+    title: req.param("title").unwrap(),
+  };
   respond_with(
     {
       let state = req.state();

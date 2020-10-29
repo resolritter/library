@@ -2,11 +2,12 @@ use bastion::prelude::BastionContext;
 
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct App {
-  pub db_pool: PgPool,
-  pub bastion: &'static BastionContext,
+  pub db_pool: &'static Arc<&'static PgPool>,
+  pub bastion: &'static Arc<&'static BastionContext>,
 }
 impl std::fmt::Debug for App {
   fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -14,14 +15,18 @@ impl std::fmt::Debug for App {
   }
 }
 
+pub struct Config {
+  pub db_url: String,
+}
+
 #[derive(Clone)]
 pub struct ServerState {
-  pub app: &'static App,
+  pub app: &'static Arc<&'static App>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Book {
-  pub id: String,
+  pub id: i32,
   pub title: String,
 }
 
