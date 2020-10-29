@@ -8,17 +8,17 @@ repos:
     hooks:
     -   id: eslint
         name: eslint
-        entry: node_modules/.bin/eslint
+        entry: web_ui/node_modules/.bin/eslint
         language: node
-        files: \.jsx?$
+        files: ^web_ui\/.*\.jsx?$
         args: [
           '--quiet'
         ]
     -   id: prettier
         name: prettier
-        entry: node_modules/.bin/prettier
+        entry: web_ui/node_modules/.bin/prettier
         language: node
-        files: \.(jsx?|html|json)$
+        files: ^web_ui\/.*\.(jsx?|html|json)$
         args: [
           '--check'
         ]
