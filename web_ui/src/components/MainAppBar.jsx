@@ -20,6 +20,14 @@ export const MainAppBar = function () {
           >
             Login
           </Button>
+          <Button
+            onClick={function () {
+              history.push(routes.createUser())
+            }}
+            color="inherit"
+          >
+            Create user
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>
