@@ -17,7 +17,7 @@ import { useSelector } from "react-redux"
 
 import { userAPIAccessLevels } from "src/constants"
 import { borrowBook, endBookBorrow, loadBooks } from "src/requests/book"
-import { handleWithSnackbar, loadingStates } from "src/utils"
+import { loadingStates, promiseToSnackbar } from "src/utils"
 
 const TableHeaderCell = withStyles({
   root: {
@@ -36,9 +36,9 @@ export function Home() {
   const books = useSelector(function ({ book: { items } }) {
     return sortBy(items, "title")
   })
-  const errorToSnackbar = React.useMemo(
+  const handleWithSnackbar = React.useMemo(
     function () {
-      return handleWithSnackbar(enqueueSnackbar)
+      return promiseToSnackbar(enqueueSnackbar)
     },
     [enqueueSnackbar],
   )
@@ -113,7 +113,7 @@ export function Home() {
                       variant="contained"
                       color="primary"
                       onClick={function () {
-                        errorToSnackbar(
+                        handleWithSnackbar(
                           borrowBook(user, { title }),
                           reloadBooks,
                         )
@@ -126,7 +126,7 @@ export function Home() {
                       variant="contained"
                       color="secondary"
                       onClick={function () {
-                        errorToSnackbar(
+                        handleWithSnackbar(
                           endBookBorrow(user, { title }),
                           reloadBooks,
                         )

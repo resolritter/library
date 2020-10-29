@@ -17,19 +17,18 @@ import { routes, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { createUser } from "src/requests/user"
 import { history } from "src/setup"
-import { handleWithSnackbar } from "src/utils"
+import { promiseToSnackbar } from "src/utils"
 
 export function CreateUser() {
   const { enqueueSnackbar } = useSnackbar()
   const [email, setEmail] = React.useState("user@user.com")
   const [accessLevel, setAccessLevel] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
   const user = useSelector(function ({ user: { profile } }) {
     return profile
   })
-  const errorToSnackbar = React.useMemo(
+  const handleWithSnackbar = React.useMemo(
     function () {
-      return handleWithSnackbar(enqueueSnackbar)
+      return promiseToSnackbar(enqueueSnackbar)
     },
     [enqueueSnackbar],
   )
@@ -44,7 +43,7 @@ export function CreateUser() {
             <form
               onSubmit={function (ev) {
                 ev.preventDefault()
-                errorToSnackbar(
+                handleWithSnackbar(
                   createUser({ email, accessLevel, shouldSetAsCurrent }),
                   function () {
                     if (shouldSetAsCurrent) {
@@ -87,7 +86,7 @@ export function CreateUser() {
                 </Select>
               </FormControl>
               <ButtonRow fullWidth>
-                <LoadingSubmitButton {...{ isLoading }} />
+                <LoadingSubmitButton isLoading={false} />
               </ButtonRow>
             </form>
           </Column>

@@ -2,16 +2,19 @@ import { zipObject } from "lodash-es"
 
 const cssVariablePrefix = "--"
 
-export const handleWithSnackbar = function (enqueueSnackbar) {
-  return function (prom, continuation) {
-    prom
+export const promiseToSnackbar = function (enqueueSnackbar) {
+  return function (prom, onOk, onError) {
+    return prom
       .then(function (result) {
         if (result instanceof Error) {
           enqueueSnackbar(result.message, {
             variant: "error",
           })
-        } else {
-          continuation()
+          if (onError) {
+            onError()
+          }
+        } else if (onOk) {
+          onOk()
         }
       })
       .catch(function (err) {

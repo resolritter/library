@@ -15,18 +15,17 @@ import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { login } from "src/requests/user"
 import { history } from "src/setup"
-import { handleWithSnackbar } from "src/utils"
+import { promiseToSnackbar } from "src/utils"
 
 export function Login() {
   const { enqueueSnackbar } = useSnackbar()
   const [email, setEmail] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
   const user = useSelector(function ({ user: { profile } }) {
     return profile
   })
-  const errorToSnackbar = React.useMemo(
+  const handleWithSnackbar = React.useMemo(
     function () {
-      return handleWithSnackbar(enqueueSnackbar)
+      return promiseToSnackbar(enqueueSnackbar)
     },
     [enqueueSnackbar],
   )
@@ -48,7 +47,7 @@ export function Login() {
             <form
               onSubmit={function (ev) {
                 ev.preventDefault()
-                errorToSnackbar(login({ email }), function () {
+                handleWithSnackbar(login({ email }), function () {
                   history.push(routes.home())
                 })
               }}
@@ -66,7 +65,7 @@ export function Login() {
                 />
               </FormControl>
               <ButtonRow fullWidth>
-                <LoadingSubmitButton {...{ isLoading }} />
+                <LoadingSubmitButton isLoading={false} />
               </ButtonRow>
             </form>
           </Column>
