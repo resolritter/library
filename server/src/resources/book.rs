@@ -16,7 +16,6 @@ use tide::{Request, StatusCode};
 
 pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
     Ok(Book {
-        id: row.try_get("id")?,
         title: row.try_get("title")?,
         borrow_id: row.try_get("borrow_id")?,
         borrow_until: row.try_get("borrow_until")?,
@@ -25,7 +24,6 @@ pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
 
 pub fn public_from_row(row: &PgRow) -> Result<BookPublic, sqlx::Error> {
     Ok(BookPublic {
-        id: row.try_get("id")?,
         title: row.try_get("title")?,
         borrow_until: row.try_get("borrow_until")?,
     })
@@ -220,10 +218,10 @@ pub async fn public_list_by_query(
     msg: &BookPublicListMsg,
 ) -> Result<ResponseData<Vec<BookPublic>>, sqlx::Error> {
     let result = if let Some(title_query) = &msg.payload.query {
-        sqlx::query("SELECT id, title, borrow_until FROM book WHERE title ILIKE CONCAT('%',$1,'%')")
+        sqlx::query("SELECT title, borrow_until FROM book WHERE title ILIKE CONCAT('%',$1,'%')")
             .bind(title_query)
     } else {
-        sqlx::query("SELECT id, title, borrow_until FROM book")
+        sqlx::query("SELECT title, borrow_until FROM book")
     }
     .fetch_all(msg.db_pool)
     .await?;

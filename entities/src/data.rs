@@ -15,7 +15,6 @@ type BookBorrowLength = i64;
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]
     pub {
-        pub id: i32,
         pub title: String,
         pub borrow_id: Option<BorrowBookId>,
         pub borrow_until: Option<BookBorrowLength>,
