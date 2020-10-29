@@ -5,18 +5,17 @@ db_deps () {
   mkdir -m 777 -p "$DB_DIR"
 }
 
+db_vars () {
+  export DB_URL="postgresql://localhost:5432/library"
+}
+
 case "$1" in
   db)
     db_deps
     docker-compose up db
   ;;
-  *)
-    if [ "$1" ]; then
-      echo "Invalid argument '$1'"
-      exit 1
-    else
-      db_deps
-      docker-compose up
-    fi
+  server)
+    db_vars
+    cargo run
   ;;
 esac
