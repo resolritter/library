@@ -1,5 +1,5 @@
-use crate::entities::{Book, UserPublic};
 use crate::logging::Loggable;
+use entities::{Book, UserPublic};
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {

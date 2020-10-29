@@ -104,7 +104,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
     let response_type = response_type.unwrap();
 
     (quote! {
-    pub async fn #name(mut req: tide::Request<crate::entities::ServerState>) -> tide::Result<tide::Response> {
+    pub async fn #name(mut req: tide::Request<crate::state::ServerState>) -> tide::Result<tide::Response> {
         #[allow(clippy::unnecessary_mut_passed)]
         let payload = #parser(&mut req).await?;
         let (reply, r) = crossbeam_channel::bounded::<Option<crate::resources::ResponseData<#response_type>>>(1);

@@ -87,7 +87,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
             #[derive(Debug)]
             pub struct #msg {
                 pub reply: crossbeam_channel::Sender<Option<crate::resources::ResponseData<#reply>>>,
-                pub payload: crate::entities::#payload,
+                pub payload: entities::#payload,
                 pub db_pool: &'static sqlx::PgPool,
             }
         }

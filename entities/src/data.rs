@@ -1,15 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-pub struct Global {
-    pub db_pool: &'static sqlx::PgPool,
-}
-
-#[derive(Debug, Clone)]
-pub struct ServerState {
-    pub global: &'static Global,
-}
-
 structout::generate!(
     pub <> {
         pub id: i32,
@@ -26,8 +16,6 @@ structout::generate!(
     }
 );
 
-// TODO add password to user login
-// TODO implement middleware for access levels
 structout::generate!(
     pub <> {
         pub email: String,

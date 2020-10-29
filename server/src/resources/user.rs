@@ -1,6 +1,7 @@
-use crate::entities::{ServerState, UserCreationPayload, UserPublic};
 use crate::messages::UserCreationMsg;
 use crate::resources::ResponseData;
+use crate::state::ServerState;
+use entities::{UserCreationPayload, UserPublic};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 use tide::{Request, StatusCode};

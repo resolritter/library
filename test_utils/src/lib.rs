@@ -3,7 +3,7 @@ pub mod path;
 pub mod port;
 
 use crate::path::executable_path;
-use crate::port::Port;
+use crate::port::get_free_port;
 use async_process::Command;
 use notify::{raw_watcher, RecursiveMode, Watcher};
 use std::fs::File;
@@ -33,7 +33,8 @@ impl Drop for SpawnedTest {
     }
 }
 
-pub fn spawn_test_program(tmp_dir: &TempDir, app_port: Port) -> SpawnedTest {
+pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
+    let app_port = get_free_port();
     let app_dir = tmp_dir.path().to_str().unwrap();
     let instance = tmp_dir.path().extension().unwrap().to_str().unwrap();
     let server_addr = format!("http://localhost:{}", app_port);

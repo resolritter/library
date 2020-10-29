@@ -897,6 +897,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "entities"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "structout",
+ "surf",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1516,6 +1526,7 @@ dependencies = [
  "clap",
  "crossbeam-channel 0.5.0",
  "endpoint_actor",
+ "entities",
  "flexi_logger",
  "insta",
  "log",
@@ -1528,7 +1539,6 @@ dependencies = [
  "serde_json",
  "sqlx",
  "stdext",
- "structout",
  "strum",
  "strum_macros",
  "surf",

@@ -1,11 +1,10 @@
-use crate::entities::{
-    Book, BookGetByTitlePayload, BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookSeed,
-    ServerState,
-};
 use crate::messages::{BookGetByTitleMsg, BookLeaseByTitleMsg};
 use crate::resources::ResponseData;
-use sqlx::{postgres::PgRow, PgPool};
-use sqlx::{Done, Row};
+use crate::state::ServerState;
+use entities::{
+    Book, BookGetByTitlePayload, BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookSeed,
+};
+use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
 use tide::{Request, StatusCode};
 

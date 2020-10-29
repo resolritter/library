@@ -1,70 +1,55 @@
+use entities::book;
 use insta::assert_snapshot;
 use stdext::function_name;
-use surf::http::mime::JSON;
-use surf::StatusCode;
 use tempdir::TempDir;
-use test_utils::{
-    format::format_test_name, port::get_free_port, read_snapshot, spawn_test_program, SpawnedTest,
-};
+use test_utils::{format::format_test_name, read_snapshot, spawn_test_program, SpawnedTest};
 
 #[async_std::test]
-async fn test_get() -> std::io::Result<()> {
-    let app_port = get_free_port();
+async fn test_get() {
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir, app_port);
+    } = &spawn_test_program(&tmp_dir);
 
-    // Check that a book exists and can be retrieved from the API
-    let book_route = format!("{}/book/Rapunzel", &server_addr);
-    let mut get = surf::get(book_route).await.unwrap();
-    assert!(get.status() == StatusCode::Ok);
+    let mut get = book::get(&server_addr, "Rapunzel").await;
     assert_snapshot!(test_name, get.body_string().await.unwrap());
 
     assert_snapshot!(read_snapshot(&log_dir));
-
-    Ok(())
 }
 
 #[async_std::test]
-async fn test_lease() -> std::io::Result<()> {
-    let app_port = get_free_port();
+async fn test_lease() {
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir, app_port);
-
-    let book_route = format!("{}/book/Rapunzel", &server_addr);
-    let borrow_for_a_day = r#"{ "lease_length": 86400 }"#;
+    } = &spawn_test_program(&tmp_dir);
 
     // Lease a book for a whole day
-    let mut good_borrow = surf::patch(&book_route)
-        .body(borrow_for_a_day)
-        .content_type(JSON)
-        .await
-        .unwrap();
-    let result = good_borrow.body_string().await.unwrap();
-    assert!(good_borrow.status() == StatusCode::Ok);
-    assert_snapshot!(format!("{}_good", test_name), result);
+    let book = "Rapunzel";
+    assert_snapshot!(
+        format!("{}_good", test_name),
+        book::borrow(&server_addr, book)
+            .await
+            .body_string()
+            .await
+            .unwrap()
+    );
 
-    // Try again.
-    // It should not be allowed since a whole day should have not passed by.
-    let mut bad_borrow = surf::patch(&book_route)
-        .body(borrow_for_a_day)
-        .content_type(JSON)
-        .await
-        .unwrap();
-    let result = bad_borrow.body_string().await.unwrap();
-    assert!(bad_borrow.status() == StatusCode::Forbidden);
-    assert_snapshot!(format!("{}_bad", test_name), result);
+    // This time it should not be allowed since the book will still be borrowed.
+    assert_snapshot!(
+        format!("{}_bad", test_name),
+        book::bad_borrow(&server_addr, book)
+            .await
+            .body_string()
+            .await
+            .unwrap()
+    );
 
     assert_snapshot!(read_snapshot(&log_dir));
-
-    Ok(())
 }

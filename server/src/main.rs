@@ -1,20 +1,19 @@
-mod entities;
 mod logging;
 mod messages;
 mod migrations;
 mod resources;
+mod state;
 
 use crate::messages::ActorGroups;
+use crate::state::{Global, ServerState};
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
-use entities::{Global, ServerState};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::thread;
 use tide::http::headers::HeaderValue;
-use tide::security::CorsMiddleware;
-use tide::security::Origin;
+use tide::security::{CorsMiddleware, Origin};
 use tide::Server;
 
 static GLOBAL: OnceCell<&'static Global> = OnceCell::new();
@@ -193,11 +192,19 @@ fn root(
                     .allow_origin(Origin::Any),
             );
 
-            server.at("/book/:title").get(resources::book::get);
+            server
+                .at(format!("/{}/:title", entities::book::BOOK_ROUTE).as_str())
+                .get(resources::book::get);
             // TODO move this to "/book/:title/lease/:user_id"
-            server.at("/book/:title").patch(resources::book::lease_book);
+            server
+                .at(format!("/{}/:title", entities::book::BOOK_ROUTE).as_str())
+                .patch(resources::book::lease_book);
 
-            server.at("/user").post(resources::user::post);
+            // TODO add password to user login
+            // TODO implement middleware for access levels
+            server
+                .at(entities::user::USER_ROUTE)
+                .post(resources::user::post);
 
             let server_handle = async_std::task::spawn(server.listen(listen_addr));
             if let Some(signal_file) = signal_file {
