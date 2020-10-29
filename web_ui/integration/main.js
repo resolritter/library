@@ -3,6 +3,8 @@ const fs = require("fs")
 const cp = require("child_process")
 const assert = require("assert").strict
 const sleep = require("sleep")
+const chokidar = require("chokidar")
+const tempy = require("tempy")
 
 const testsLockPath = path.join(__dirname, ".tests.lock")
 const executablePath = path.join(__dirname, "../../run.sh")
@@ -21,9 +23,29 @@ const getFreePort = function () {
   return port
 }
 
-const serverPort = getFreePort()
-const webUIPort = getFreePort()
+const installWatcher = function () {
+  const signalFile = tempy.file()
+  const whenReady = new Promise(function (resolve) {
+    const fileName = path.basename(signalFile)
+    const watcher = chokidar.watch(signalFile, { persistent: true })
 
+    watcher.on("raw", function (event, someFileName) {
+      if (someFileName === fileName) {
+        watcher.close()
+        setTimeout(resolve, 1000)
+      }
+    })
+  })
+  return { signalFile, whenReady }
+}
+
+const serverPort = getFreePort()
+const uiPort = getFreePort()
+
+const {
+  signalFile: serverSignalFile,
+  whenReady: whenServerReady,
+} = installWatcher()
 const serverAddr = `http://127.0.0.1:${serverPort}`
 const server = cp.spawn(
   executablePath,
@@ -36,6 +58,8 @@ const server = cp.spawn(
     `${serverPort}__${Date.now()}`,
     "--admin-credentials-for-test",
     "admin@admin.com",
+    "--signal-file",
+    serverSignalFile,
     "--port",
     serverPort,
     "test_server",
@@ -43,13 +67,14 @@ const server = cp.spawn(
   { stdio: ["ignore", "inherit", "inherit"] },
 )
 
-const webUIDir = path.join(__dirname, "..")
-const webUIAddr = `http://127.0.0.1:${webUIPort}`
-const webUI = cp.spawn(
+const uiDir = path.join(__dirname, "..")
+const uiAddr = `http://127.0.0.1:${uiPort}`
+const { signalFile: uiSignalFile, whenReady: whenUiReady } = installWatcher()
+const ui = cp.spawn(
   "bash",
   [
     "-c",
-    `PORT=${webUIPort} API_URL="${serverAddr}" npm run --prefix "${webUIDir}" start`,
+    `PORT=${uiPort} SIGNAL_FILE="${uiSignalFile}" API_URL="${serverAddr}" npm run --prefix "${uiDir}" start`,
   ],
   {
     stdio: ["ignore", "inherit", "inherit"],
@@ -58,10 +83,10 @@ const webUI = cp.spawn(
 
 const cleanOnExit = function () {
   server.kill()
-  webUI.kill()
+  ui.kill()
   cp.execFileSync(executablePath, [
     "free_port",
-    webUIPort,
+    uiPort,
     {
       stdio: ["ignore", "inherit", "inherit"],
     },
@@ -71,13 +96,16 @@ const cleanOnExit = function () {
 process.on("SIGINT", cleanOnExit)
 process.on("SIGTERM", cleanOnExit)
 
-const operation = process.argv[2] || "open"
+const operation = process.argv[2] || "run"
 const cypressPath = path.join(__dirname, "./node_modules/.bin/cypress")
 
-sleep.msleep(5000)
-const runCypress = cp.spawnSync(
-  cypressPath,
-  [operation, "--env", `UIAddr=${webUIAddr},ID=${webUIPort}`],
-  { cwd: __dirname, stdio: ["ignore", "inherit", "inherit"] },
-)
-cleanOnExit()
+whenServerReady.then(function () {
+  whenUiReady.then(function () {
+    cp.spawnSync(
+      cypressPath,
+      [operation, "--env", `UIAddr=${uiAddr},ID=${uiPort}`],
+      { cwd: __dirname, stdio: ["ignore", "inherit", "inherit"] },
+    )
+    cleanOnExit()
+  })
+})
