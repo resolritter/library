@@ -106,6 +106,7 @@ export function Home() {
 
               const borrowButton = (
                 <Button
+                  key="borrowButton"
                   variant="contained"
                   color="primary"
                   onClick={function () {
@@ -118,6 +119,7 @@ export function Home() {
               )
               const cancelBorrowButton = (
                 <Button
+                  key="cancelBorrowButton"
                   variant="contained"
                   color="secondary"
                   onClick={function () {
