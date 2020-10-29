@@ -34,3 +34,9 @@ macro_rules! end_loan_route {
         "/end_loan/{}"
     };
 }
+#[macro_export]
+macro_rules! session_route {
+    () => {
+        "/session"
+    };
+}

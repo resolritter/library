@@ -1,5 +1,5 @@
 use crate::logging::Loggable;
-use entities::{Book, BookPublic, UserPublic};
+use entities::{Book, BookPublic, User};
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
@@ -8,7 +8,7 @@ pub enum ActorGroups {
     User,
 }
 
-resource_messaging::generate!(User, [(Creation, UserPublic)]);
+resource_messaging::generate!(User, [(Creation, User), (Login, User)]);
 resource_messaging::generate!(
     Book,
     [
@@ -36,6 +36,7 @@ impl Loggable for UserMsg {
     fn to_log(&self) -> String {
         match self {
             UserMsg::Creation(msg) => format!("{:#?}", msg.payload),
+            UserMsg::Login(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

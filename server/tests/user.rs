@@ -1,4 +1,4 @@
-use entities::{access_mask, user, UserCreationPayload};
+use entities::access_mask;
 use insta::assert_snapshot;
 use stdext::function_name;
 use surf::StatusCode;
@@ -10,10 +10,57 @@ use test_utils::{
 };
 
 #[async_std::test]
-async fn test_create_user() {
+async fn test_create_user_and_login() {
+    use entities::{user, UserCreationPayload, UserLoginPayload};
+
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
+    let SpawnedTest {
+        server_addr,
+        log_dir,
+        process: _,
+    } = &spawn_test_program(&tmp_dir, None);
 
+    // Fail a login with a user which does _not_ exist
+    let bad_request_nonexistent_user = user::do_login(
+        &server_addr,
+        &UserLoginPayload {
+            email: "DOES_NOT_EXIST@user.com".to_string(),
+        },
+    )
+    .await;
+    assert!(bad_request_nonexistent_user.status() == StatusCode::NotFound);
+
+    // Creates a simple user
+    let (_, user) = user::create(
+        &server_addr,
+        &UserCreationPayload {
+            email: "simple@user.com".to_string(),
+            access_mask: access_mask::USER,
+            requester_access_token: None,
+        },
+    )
+    .await;
+
+    // Logs in with the created user
+    let (_, same_user) = user::login(
+        &server_addr,
+        &UserLoginPayload {
+            email: user.email.to_string(),
+        },
+    )
+    .await;
+    assert!(user.email == same_user.email);
+
+    assert_snapshot!(read_snapshot(&log_dir));
+}
+
+#[async_std::test]
+async fn test_create_user() {
+    use entities::{user, UserCreationPayload};
+
+    let test_name = format_test_name(function_name!());
+    let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
         log_dir,

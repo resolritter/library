@@ -22,8 +22,9 @@ structout::generate!(
         pub lease_length: BookLeaseLength,
     } => {
         Book => [omit(lease_length)],
-        // 'lease_id' refers to the current borrower of the book, thus it'll be hidden
-        BookPublic => [omit(lease_length, lease_id)],
+        // 'lease_id' refers to the current borrower of the book;
+        // of course, it should be hidden for the general public
+        BookPublic => [omit(lease_id, lease_length)],
         BookGetByTitlePayload => [include(title)],
         BookLeaseByTitleRequestBody => [include(lease_length), upsert(pub lease_id: LeaseBookId)],
         BookEndLoanByTitlePayload => [include(title), upsert(pub lease_id: LeaseBookId, pub access_token: String)],
@@ -43,7 +44,9 @@ structout::generate!(
         pub access_mask: i32,
         pub access_token: String,
     } => {
-        UserPublic => [],
+        User => [],
         UserCreationPayload => [omit(access_token), upsert(pub requester_access_token: Option<String>)],
+        // TODO auth should support password as well
+        UserLoginPayload => [include(email)],
     }
 );

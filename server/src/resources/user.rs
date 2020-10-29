@@ -1,13 +1,13 @@
-use crate::messages::UserCreationMsg;
+use crate::messages::{UserCreationMsg, UserLoginMsg};
 use crate::resources::ResponseData;
 use crate::state::ServerState;
-use entities::{access_mask, UserCreationPayload, UserPublic};
+use entities::{access_mask, User, UserCreationPayload, UserLoginPayload};
 use sqlx::postgres::{PgDone, PgPool, PgRow};
 use sqlx::Row;
 use tide::{Request, StatusCode};
 
-pub fn from_row(row: &PgRow) -> Result<UserPublic, sqlx::Error> {
-    Ok(UserPublic {
+pub fn from_row(row: &PgRow) -> Result<User, sqlx::Error> {
+    Ok(User {
         email: row.try_get("email")?,
         access_mask: row.try_get("access_mask")?,
         access_token: row.try_get("access_token")?,
@@ -57,7 +57,30 @@ pub async fn check_access_mask(
 }
 
 #[inline(always)]
-pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<UserPublic>, sqlx::Error> {
+pub async fn create_session(msg: &UserLoginMsg) -> Result<ResponseData<User>, sqlx::Error> {
+    let row = sqlx::query(r#"SELECT * FROM "user" WHERE email=$1"#)
+        .bind(&msg.payload.email)
+        .fetch_optional(msg.db_pool)
+        .await?;
+    if let Some(row) = row {
+        Ok(ResponseData(StatusCode::Created, Some(from_row(&row)?)))
+    } else {
+        Ok(ResponseData(StatusCode::NotFound, None))
+    }
+}
+#[inline(always)]
+async fn extract_login(req: &mut Request<ServerState>) -> tide::Result<UserLoginPayload> {
+    Ok(req.body_json::<UserLoginPayload>().await?)
+}
+actor_response_handler::generate!(Config {
+    name: login,
+    actor: User,
+    response_type: User,
+    tag: Login
+});
+
+#[inline(always)]
+pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<User>, sqlx::Error> {
     let is_authorized = match &msg.payload.requester_access_token {
         Some(token) => check_access_mask(token, msg.payload.access_mask, msg.db_pool).await?,
         None => msg.payload.access_mask == access_mask::USER,
@@ -78,10 +101,6 @@ pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<UserPubli
 
     Ok(ResponseData(StatusCode::Created, Some(from_row(&row)?)))
 }
-endpoint_actor::generate!({ actor: User }, {
-    Creation: create_user,
-});
-
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreationPayload> {
     Ok(req.body_json::<UserCreationPayload>().await?)
@@ -89,6 +108,11 @@ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreati
 actor_response_handler::generate!(Config {
     name: post,
     actor: User,
-    response_type: UserPublic,
+    response_type: User,
     tag: Creation
+});
+
+endpoint_actor::generate!({ actor: User }, {
+    Creation: create_user,
+    Login: create_session,
 });

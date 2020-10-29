@@ -1,0 +1,15 @@
+---
+source: server/tests/user.rs
+expression: read_snapshot(&log_dir)
+---
+UserLoginPayload {
+    email: "DOES_NOT_EXIST@user.com",
+}
+UserCreationPayload {
+    email: "simple@user.com",
+    access_mask: 1,
+    requester_access_token: None,
+}
+UserLoginPayload {
+    email: "simple@user.com",
+}
