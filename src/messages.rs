@@ -6,22 +6,22 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 pub static mut BOOK: OnceCell<
-  &'static Arc<&'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>>>,
+    &'static Arc<&'static Mutex<Option<crossbeam_channel::Sender<BookGetMessage>>>>,
 > = OnceCell::new();
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
-  Input,
-  Book,
+    Input,
+    Book,
 }
 
 #[derive(Debug)]
 pub struct Message<'a, T, M>
 where
-  T: Debug,
-  M: Debug,
+    T: Debug,
+    M: Debug,
 {
-  channel: crossbeam_channel::Sender<T>,
-  payload: M,
-  db_pool: &'a sqlx::PgPool,
+    channel: crossbeam_channel::Sender<T>,
+    payload: M,
+    db_pool: &'a sqlx::PgPool,
 }
