@@ -1,7 +1,9 @@
 use crate::data::{
     Book, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload, BookPublic,
 };
-use crate::{book_borrow_route, book_route, books_route, books_route_root, server_root};
+use crate::{
+    book_borrow_route, book_route, book_route_root, books_route, books_route_root, server_root,
+};
 use surf::{self, http::mime::JSON, RequestBuilder, Response, StatusCode};
 
 pub fn do_borrow(
@@ -45,8 +47,8 @@ pub async fn end_borrow(server_addr: &str, payload: &BookEndBorrowByTitlePayload
 
 pub fn do_post(server_addr: &str, payload: &BookCreationPayload) -> RequestBuilder {
     surf::post(format!(
-        concat!(server_root!(), book_route!()),
-        server_addr, payload.title
+        concat!(server_root!(), book_route_root!()),
+        server_addr
     ))
     .body(serde_json::json!(payload).to_string())
     .header("X-Auth", payload.access_token.clone())

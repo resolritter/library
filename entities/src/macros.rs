@@ -5,21 +5,27 @@ macro_rules! server_root {
     };
 }
 #[macro_export]
-macro_rules! book_route {
+macro_rules! book_route_root {
     () => {
-        "/book/{}"
+        "/book"
     };
 }
 #[macro_export]
-macro_rules! books_route {
+macro_rules! book_route {
     () => {
-        "/books/{}"
+        concat!(book_route_root!(), "/{}")
     };
 }
 #[macro_export]
 macro_rules! books_route_root {
     () => {
         "/books"
+    };
+}
+#[macro_export]
+macro_rules! books_route {
+    () => {
+        concat!(books_route_root!(), "/{}")
     };
 }
 #[macro_export]
