@@ -19,6 +19,7 @@ import {
 
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { flexCenteredColumn } from "src/styles"
+import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 
 const CreateUserColumn = withStyles({
   root: flexCenteredColumn,
@@ -40,6 +41,7 @@ export function CreateUser() {
   const createUserForm = React.useRef()
   const [email, setEmail] = React.useState("user@user.com")
   const [accessLevel, setAccessLevel] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(false)
 
   return (
     <FullContentSpaceLayoutCentered>
@@ -53,6 +55,7 @@ export function CreateUser() {
               ref={createUserForm}
               onSubmit={function (ev) {
                 ev.preventDefault()
+                setIsLoading(true)
                 console.log({ email, accessLevel })
               }}
             >
@@ -85,9 +88,7 @@ export function CreateUser() {
                 </Select>
               </FormControl>
               <CreateUserButtonRow fullWidth>
-                <Button type="submit" variant="contained" color="primary">
-                  SUBMIT
-                </Button>
+                <LoadingSubmitButton {...{ isLoading }} />
               </CreateUserButtonRow>
             </form>
           </CreateUserColumn>
