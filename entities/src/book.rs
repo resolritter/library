@@ -1,5 +1,6 @@
 use crate::data::{
-    Book, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload, BookPublic,
+    Book, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload,
+    BookOkResponse, BookPublic,
 };
 use crate::{
     book_borrow_route, book_route, book_route_root, books_route, books_route_root, server_root,
@@ -58,8 +59,8 @@ pub async fn post(server_addr: &str, payload: &BookCreationPayload) -> (String, 
     let mut response = do_post(server_addr, payload).await.unwrap();
     assert!(response.status() == StatusCode::Created);
     let str_body = response.body_string().await.unwrap();
-    let value = serde_json::from_str::<Book>(&str_body).unwrap();
-    (str_body, value)
+    let value = serde_json::from_str::<BookOkResponse>(&str_body).unwrap();
+    (str_body, value.Ok)
 }
 
 pub async fn get(server_addr: &str, id: &str) -> Response {

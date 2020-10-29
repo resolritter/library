@@ -80,7 +80,9 @@ actor_response_handler::generate!({
 });
 
 #[inline(always)]
-pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<User>, sqlx::Error> {
+pub async fn create_user(
+    msg: &UserCreationMsg,
+) -> Result<ResponseData<Result<User, String>>, sqlx::Error> {
     let is_authorized = match &msg.payload.requester_access_token {
         Some(token) => check_access_mask(token, access_mask::ADMIN, msg.db_pool).await?,
         None => msg.payload.access_mask == access_mask::USER,
@@ -89,7 +91,7 @@ pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<User>, sq
         return Ok(ResponseData(StatusCode::Forbidden, None));
     }
 
-    let row = sqlx::query(
+    let result = sqlx::query(
         r#"INSERT INTO "user" (email, access_mask, access_token) VALUES ($1, $2, $3) RETURNING *"#,
     )
     .bind(&msg.payload.email)
@@ -97,9 +99,27 @@ pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<User>, sq
     // TODO have an actual access token generation strategy
     .bind(&msg.payload.email)
     .fetch_one(msg.db_pool)
-    .await?;
+    .await;
 
-    Ok(ResponseData(StatusCode::Created, Some(from_row(&row)?)))
+    match result {
+        Ok(row) => Ok(ResponseData(StatusCode::Created, Some(Ok(from_row(&row)?)))),
+        Err(err) => match err {
+            sqlx::Error::Database(err) => match err.code() {
+                Some(code) => {
+                    if code == "23505" {
+                        Ok(ResponseData(
+                            StatusCode::UnprocessableEntity,
+                            Some(Err(format!("{} already exists", &msg.payload.email))),
+                        ))
+                    } else {
+                        Err(sqlx::Error::Database(err))
+                    }
+                }
+                _ => Err(sqlx::Error::Database(err)),
+            },
+            _ => Err(err),
+        },
+    }
 }
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreationPayload> {
@@ -108,7 +128,7 @@ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreati
 actor_response_handler::generate!({
     name: post,
     actor: User,
-    response_type: User,
+    response_type: Result<User, String>,
     tag: Creation
 });
 

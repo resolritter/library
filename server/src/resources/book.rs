@@ -134,7 +134,9 @@ actor_response_handler::generate!({
 });
 
 #[inline(always)]
-pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::Error> {
+pub async fn create(
+    msg: &BookCreationMsg,
+) -> Result<ResponseData<Result<Book, String>>, sqlx::Error> {
     let is_authorized = check_access_mask(
         &msg.payload.access_token,
         access_mask::LIBRARIAN,
@@ -146,11 +148,29 @@ pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::E
         return Ok(ResponseData(StatusCode::Forbidden, None));
     }
 
-    let row = sqlx::query("INSERT INTO book (title) VALUES ($1) RETURNING *")
+    let result = sqlx::query("INSERT INTO book (title) VALUES ($1) RETURNING *")
         .bind(&msg.payload.title)
         .fetch_one(msg.db_pool)
-        .await?;
-    Ok(ResponseData(StatusCode::Created, Some(from_row(&row)?)))
+        .await;
+    match result {
+        Ok(row) => Ok(ResponseData(StatusCode::Created, Some(Ok(from_row(&row)?)))),
+        Err(err) => match err {
+            sqlx::Error::Database(err) => match err.code() {
+                Some(code) => {
+                    if code == "23505" {
+                        Ok(ResponseData(
+                            StatusCode::UnprocessableEntity,
+                            Some(Err(format!("{} already exists", &msg.payload.title))),
+                        ))
+                    } else {
+                        Err(sqlx::Error::Database(err))
+                    }
+                }
+                _ => Err(sqlx::Error::Database(err)),
+            },
+            _ => Err(err),
+        },
+    }
 }
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
@@ -168,7 +188,7 @@ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreati
 actor_response_handler::generate!({
     name: post,
     actor: Book,
-    response_type: Book,
+    response_type: Result<Book, String>,
     tag: Creation
 });
 

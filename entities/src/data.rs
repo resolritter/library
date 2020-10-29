@@ -36,6 +36,11 @@ structout::generate!(
 pub struct BookPublicListPayload {
     pub query: Option<String>,
 }
+#[derive(Deserialize)]
+#[allow(non_snake_case)]
+pub struct BookOkResponse {
+    pub Ok: Book,
+}
 
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]
@@ -50,3 +55,8 @@ structout::generate!(
         UserLoginPayload => [include(email)],
     }
 );
+#[derive(Deserialize)]
+#[allow(non_snake_case)]
+pub struct UserOkResponse {
+    pub Ok: User,
+}

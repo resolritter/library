@@ -13,8 +13,12 @@ export const getAccessToken = function () {
 
 export const handleErrorResponse = async function (response) {
   try {
-    return new Error((await response.json()).message)
-  } catch (err) {
+    const body = await response.json()
+    if (body.Err) {
+      return new Error(body.Err)
+    }
+  } catch {
     return new Error(getReasonPhrase(response.status))
   }
+  return new Error(getReasonPhrase(response.status))
 }

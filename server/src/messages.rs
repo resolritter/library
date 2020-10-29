@@ -8,14 +8,14 @@ pub enum ActorGroups {
     User,
 }
 
-resource_messaging::generate!(User, [(Creation, User), (Login, User)]);
+resource_messaging::generate!(User, [(Creation, Result<User, String>), (Login, User)]);
 resource_messaging::generate!(
     Book,
     [
         (BorrowByTitle, String),
         (GetByTitle, Book),
         (EndBorrowByTitle, ()),
-        (Creation, Book),
+        (Creation, Result<Book, String>),
         (PublicList, Vec<BookPublic>),
     ]
 );
