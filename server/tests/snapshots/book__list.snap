@@ -2,11 +2,20 @@
 source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
+BookCreationPayload {
+    title: "Cinderella",
+    access_token: "admin_access_token",
+}
 BookPublicListPayload {
     query: None,
 }
 BookPublicListPayload {
     query: Some(
-        "Rapunzel",
+        "Cinderella",
+    ),
+}
+BookPublicListPayload {
+    query: Some(
+        "DOES_NOT_EXIST",
     ),
 }

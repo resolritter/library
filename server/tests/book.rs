@@ -67,7 +67,9 @@ async fn test_create_and_get() {
 
 #[async_std::test]
 async fn test_borrow() {
-    use entities::{book, user, BookBorrowByTitlePayload, UserCreationPayload};
+    use entities::{
+        book, user, BookBorrowByTitlePayload, BookCreationPayload, UserCreationPayload,
+    };
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -75,9 +77,17 @@ async fn test_borrow() {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir, None);
+    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
+    let (_, book) = book::post(
+        &server_addr,
+        &BookCreationPayload {
+            access_token: ADMIN_ACCESS_TOKEN.to_string(),
+            title: "Cinderella".to_string(),
+        },
+    )
+    .await;
     let (_, first_user) = user::create(
         &server_addr,
         &UserCreationPayload {
@@ -88,7 +98,7 @@ async fn test_borrow() {
     )
     .await;
     let payload = BookBorrowByTitlePayload {
-        title: "Rapunzel".to_string(),
+        title: book.title.to_string(),
         borrow_id: first_user.email.clone(),
         borrow_length: WHOLE_DAY,
     };
@@ -121,7 +131,8 @@ async fn test_borrow() {
 #[async_std::test]
 async fn test_end_borrow() {
     use entities::{
-        book, user, BookBorrowByTitlePayload, BookEndBorrowByTitlePayload, UserCreationPayload,
+        book, user, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload,
+        UserCreationPayload,
     };
 
     let test_name = format_test_name(function_name!());
@@ -133,6 +144,14 @@ async fn test_end_borrow() {
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
+    let (_, book) = book::post(
+        &server_addr,
+        &BookCreationPayload {
+            access_token: ADMIN_ACCESS_TOKEN.to_string(),
+            title: "Cinderella".to_string(),
+        },
+    )
+    .await;
     let (_, first_user) = user::create(
         &server_addr,
         &UserCreationPayload {
@@ -152,7 +171,7 @@ async fn test_end_borrow() {
     )
     .await;
     let mut borrow_payload = BookBorrowByTitlePayload {
-        title: "Rapunzel".to_string(),
+        title: book.title.to_string(),
         borrow_id: first_user.email.clone(),
         borrow_length: WHOLE_DAY,
     };
@@ -208,7 +227,7 @@ async fn test_end_borrow() {
 
 #[async_std::test]
 async fn test_list() {
-    use entities::book;
+    use entities::{book, BookCreationPayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -218,15 +237,25 @@ async fn test_list() {
         process: _,
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
+    let (_, book) = book::post(
+        &server_addr,
+        &BookCreationPayload {
+            access_token: ADMIN_ACCESS_TOKEN.to_string(),
+            title: "Cinderella".to_string(),
+        },
+    )
+    .await;
     let (_, books) = book::list(&server_addr, None).await;
-    assert!(books.len() != 0);
+    assert!(books.len() == 1);
 
-    let query = "Rapunzel";
-    let (_, filtered_books) = book::list(&server_addr, Some(query)).await;
-    assert!(filtered_books.len() != 0);
+    let (_, filtered_books) = book::list(&server_addr, Some(&book.title)).await;
+    assert!(filtered_books.len() == 1);
     for book in filtered_books {
-        assert!(book.title.contains(query));
+        assert!(book.title.contains(&book.title));
     }
+
+    let (_, no_matching_books) = book::list(&server_addr, Some("DOES_NOT_EXIST")).await;
+    assert!(no_matching_books.len() == 0);
 
     assert_snapshot!(read_snapshot(&log_dir));
 }

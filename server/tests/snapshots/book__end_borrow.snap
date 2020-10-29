@@ -2,6 +2,10 @@
 source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
+BookCreationPayload {
+    title: "Cinderella",
+    access_token: "admin_access_token",
+}
 UserCreationPayload {
     email: "first@user.com",
     access_mask: 1,
@@ -13,20 +17,20 @@ UserCreationPayload {
     requester_access_token: None,
 }
 BookBorrowByTitlePayload {
-    title: "Rapunzel",
+    title: "Cinderella",
     borrow_length: 86400,
     borrow_id: "first@user.com",
 }
 BookEndBorrowByTitlePayload {
-    title: "Rapunzel",
+    title: "Cinderella",
     access_token: "second@user.com",
 }
 BookEndBorrowByTitlePayload {
-    title: "Rapunzel",
+    title: "Cinderella",
     access_token: "first@user.com",
 }
 BookBorrowByTitlePayload {
-    title: "Rapunzel",
+    title: "Cinderella",
     borrow_length: 86400,
     borrow_id: "second@user.com",
 }
@@ -38,6 +42,6 @@ UserCreationPayload {
     ),
 }
 BookEndBorrowByTitlePayload {
-    title: "Rapunzel",
+    title: "Cinderella",
     access_token: "librarian@user.com",
 }
