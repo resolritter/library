@@ -57,7 +57,7 @@ pub async fn create_session(msg: &UserLoginMsg) -> Result<ResponseData<User>, sq
 async fn extract_login(req: &mut Request<ServerState>) -> tide::Result<UserLoginPayload> {
     Ok(req.body_json::<UserLoginPayload>().await?)
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: login,
     actor: User,
     response_type: User,
@@ -110,7 +110,7 @@ pub async fn create(
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreatePayload> {
     Ok(req.body_json::<UserCreatePayload>().await?)
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: post,
     actor: User,
     response_type: Result<User, String>,

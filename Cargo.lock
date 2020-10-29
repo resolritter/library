@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "actor_response_handler"
+name = "actor_request_handler"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -1529,7 +1529,7 @@ name = "library"
 version = "0.1.0"
 dependencies = [
  "actor_msg_resources",
- "actor_response_handler",
+ "actor_request_handler",
  "async-std",
  "bastion",
  "clap",

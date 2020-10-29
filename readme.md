@@ -24,7 +24,7 @@
 
     5.3. [actor_msg_resources](#actor_msg_resources)
 
-    5.4. [actor_response_handler](#actor_response_handler)
+    5.4. [actor_request_handler](#actor_request_handler)
 
     5.5. [Recap - Putting it all together](#recap)
 
@@ -218,7 +218,7 @@ The most basic and decoupled crate which primarily hosts the data-centric aspect
 
 ## actor_msg_resources <a name="actor_msg_resources"></a>
 
-The **resource_messaging** ([definition](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/resource_messaging/src/lib.rs#L108) and [usage](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11)) macro has the following roles
+The **actor_msg_resources** ([definition](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/actor_msg_resources/src/lib.rs#L108) and [usage](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11)) macro has the following roles
 
 1. Generate the common `struct` structure for all messages throughout the system.
 
@@ -260,14 +260,14 @@ The payload field references `User` `Login` `Payload` which is yet another conve
 
 Now that the messages' structures have been taken care of, the HTTP endpoints can be built.
 
-## actor_response_handler <a name="actor_response_handler"></a>
+## actor_request_handler <a name="actor_request_handler"></a>
 
 The **actor_response_handler** macro ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/actor_response_handler/src/lib.rs#L116)) expands to a function with steps you would have to take to parse a request into a message. Its expansion should be straightforward enough to read.
 
 The parser function's name is set by convention. For a macro
 
 ```
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: login,
     actor: User,
     response_type: User,
@@ -293,7 +293,7 @@ Bastion's API for spawning actors is like the following
 
 The first setup for any given actor is registering his own channel of communication through a lock which, as mentioned in the [previous section](#once-cell-mention), is globally reachable through an OnceCell (note: reliance on such mechanism does mean that redundancy cannot be achieved using this approach as it currently is implemented). Availability through the OnceCell is done for the sake of making this actor's channel discoverable, always, whenever it comes up (it might crash at some point and [that's fine](#let-it-crash)).
 
-**endpoint_actor** expands to the [repetitive code](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L124) you'd normally have to write by hand, which is unwrapping the enums and forwarding the payload ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L97)) to the function which does whatever you want with the payload + the messages' embellished data (as shown in [resource_messaging](#resource_messaging), in this app's case it's the database pool, but it could be anything else you wanted).
+**endpoint_actor** expands to the [repetitive code](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L124) you'd normally have to write by hand, which is unwrapping the enums and forwarding the payload ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L97)) to the function which does whatever you want with the payload + the messages' embellished data (as shown in [actor_msg_resources](#actor_msg_resources), in this app's case it's the database pool, but it could be anything else you wanted).
 
 ```
 endpoint_actor::generate!({ actor: User }, {
@@ -337,13 +337,13 @@ actor_msg_resources::generate!(
 
 3. Create or use an existing [resource](https://github.com/resolritter/library/tree/master/server/src/resources) for handling the new message.
 
-4. Define a new request handler with [actor_response_handler](#actor_response_handler)
+4. Define a new request handler with [actor_request_handler](#actor_request_handler)
 
 ```diff
 + async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
 +    // extract the payload
 + }
-+ actor_response_handler::generate!(Config {
++ actor_request_handler::generate!(Config {
 +    name: post,
 +    actor: Book,
 +    response_type: Book,

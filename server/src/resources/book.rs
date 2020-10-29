@@ -94,7 +94,7 @@ async fn extract_end_borrow(
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: end_borrow,
     actor: Book,
     response_type: (),
@@ -126,7 +126,7 @@ async fn extract_get(req: &Request<ServerState>) -> tide::Result<BookGetByTitleP
         )),
     }
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: get,
     actor: Book,
     response_type: Book,
@@ -185,7 +185,7 @@ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreate
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: post,
     actor: Book,
     response_type: Result<Book, String>,
@@ -255,7 +255,7 @@ async fn extract_borrow_book(
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: borrow_book,
     actor: Book,
     response_type: String,
@@ -287,7 +287,7 @@ async fn extract_public_list(req: &Request<ServerState>) -> tide::Result<BookPub
         query: req.param("query").ok(),
     })
 }
-actor_response_handler::generate!({
+actor_request_handler::generate!({
     name: public_list,
     actor: Book,
     response_type: Vec<BookPublic>,

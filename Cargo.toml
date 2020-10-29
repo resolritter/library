@@ -4,7 +4,7 @@ members = [
   "server",
   "entities",
   "test_utils",
-  "actor_response_handler",
+  "actor_request_handler",
   "endpoint_actor",
   "actor_msg_resources"
 ]
