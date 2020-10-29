@@ -60,7 +60,7 @@ export function CreateUser() {
                   enqueueSnackbar(result.message, { variant: "error" })
                   setIsLoading(false)
                 } else {
-                  history.push(routes.login())
+                  history.push(routes.home())
                 }
               }}
             >
