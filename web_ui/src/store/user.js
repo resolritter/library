@@ -7,7 +7,7 @@ export default createSlice({
   initialState,
   reducers: {
     setUser: function (state, { payload: profile }) {
-      return profile
+      state.profile = profile
     },
   },
 })
