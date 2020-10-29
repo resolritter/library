@@ -4,4 +4,5 @@ module.exports = {
     "@babel/preset-react",
     "linaria/babel",
   ],
+  plugins: [["@babel/plugin-transform-runtime"]],
 }
