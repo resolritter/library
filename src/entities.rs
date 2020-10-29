@@ -13,7 +13,7 @@ pub struct ServerState {
 structout::generate!(
     pub <> {
         pub id: i32,
-        pub title: String
+        pub title: String,
     } => {
         Book => [attr(#[derive(Serialize, Debug, Default)])],
         BookSeed => [omit(id), omit(lease_id), omit(leased_until)],

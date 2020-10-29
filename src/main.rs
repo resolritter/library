@@ -1,4 +1,5 @@
 mod entities;
+mod logging;
 mod messages;
 mod migrations;
 mod resources;
@@ -24,6 +25,17 @@ macro_rules! init_actors {
 
 #[async_std::main]
 async fn main() {
+    // Initialize the logger
+    let mut logging_conf =
+        flexi_logger::Logger::with_env_or_str("library=debug").format(flexi_logger::opt_format);
+    if let Ok(log_dir) = std::env::var("APP_LOG_DIR") {
+        logging_conf = logging_conf
+            .log_to_file()
+            .directory(log_dir)
+            .duplicate_to_stdout(flexi_logger::Duplicate::All);
+    }
+    logging_conf.start().unwrap();
+
     // Initialize the database environment
     let db_url = std::env::var("DB_URL").unwrap();
     let is_reset_and_seed = std::env::var("RESET_AND_SEED").is_ok();

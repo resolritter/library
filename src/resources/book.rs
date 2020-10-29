@@ -1,6 +1,7 @@
 use crate::entities::{Book, BookSeed, GetBookByTitlePayload, ServerState};
+use crate::logging::logged;
 use crate::messages::{ActorGroups, BookMsg, BookMsg::*, GetBookByTitleMsg, BOOK};
-use crate::resources::respond_with;
+use crate::{actor_lookup_response, actor_send};
 use bastion::prelude::*;
 use sqlx::Row;
 use sqlx::{postgres::PgRow, PgPool};
@@ -33,34 +34,16 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
     };
     let (reply, r) = crossbeam_channel::bounded::<Option<Book>>(1);
     let state = req.state();
-    let payload = GetByTitle(GetBookByTitleMsg {
-        reply,
-        payload,
-        db_pool: state.global.db_pool,
-    });
 
-    unsafe {
-        BOOK.get()
-            .unwrap()
-            .read()
-            .as_ref()
-            .unwrap()
-            .send(payload)
-            .unwrap();
-    }
-
-    crossbeam_channel::select! {
-      recv(r) -> msg => {
-        match msg {
-          Ok(item) => match item {
-            Some(book) => respond_with::<Book>(Some(book), tide::StatusCode::Ok),
-            None => respond_with::<Book>(None, tide::StatusCode::NotFound),
-          },
-          _ => respond_with::<Book>(None, tide::StatusCode::InternalServerError)
-        }
-      },
-      default(std::time::Duration::from_secs(3)) => respond_with::<Book>(None, tide::StatusCode::RequestTimeout),
-    }
+    actor_send!(
+        BOOK,
+        GetByTitle(GetBookByTitleMsg {
+            reply,
+            payload,
+            db_pool: state.global.db_pool,
+        }),
+    );
+    actor_lookup_response!(r, Book)
 }
 
 pub fn actor(children: Children) -> Children {
@@ -75,7 +58,7 @@ pub fn actor(children: Children) -> Children {
             println!("Book actor is ready!");
 
             loop {
-                match r.recv().unwrap() {
+                match logged(r.recv().unwrap()) {
                     GetByTitle(GetBookByTitleMsg {
                         reply,
                         payload,

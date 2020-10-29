@@ -1,4 +1,5 @@
 use crate::entities::{Book, GetBookByTitlePayload};
+use crate::logging::Loggable;
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use std::fmt::Debug;
@@ -20,8 +21,18 @@ macro_rules! define_message {
     };
 }
 define_message!(GetBookByTitleMsg, Option<Book>, GetBookByTitlePayload);
+
+#[derive(Debug)]
 pub enum BookMsg {
     GetByTitle(GetBookByTitleMsg),
+}
+
+impl Loggable for BookMsg {
+    fn to_log(&self) -> String {
+        match self {
+            BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
+        }
+    }
 }
 
 pub static mut BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookMsg>>>> =
