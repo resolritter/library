@@ -17,6 +17,9 @@ export const apiEndpoints = {
   createUser: function () {
     return `${apiURL}/user`
   },
+  session: function () {
+    return `${apiURL}/session`
+  },
   books: function () {
     return `${apiURL}/books`
   },

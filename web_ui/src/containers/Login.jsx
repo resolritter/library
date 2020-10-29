@@ -1,14 +1,20 @@
-import { withStyles } from "@material-ui/core"
-import Button from "@material-ui/core/Button"
-import Card from "@material-ui/core/Card"
-import CardContent from "@material-ui/core/CardContent"
-import Container from "@material-ui/core/Container"
-import FormControl from "@material-ui/core/FormControl"
-import Input from "@material-ui/core/Input"
-import InputLabel from "@material-ui/core/InputLabel"
-import Typography from "@material-ui/core/Typography"
+import {
+  Card,
+  CardContent,
+  Container,
+  FormControl,
+  Input,
+  InputLabel,
+  Typography,
+  withStyles,
+} from "@material-ui/core"
+import { useSnackbar } from "notistack"
 import React from "react"
+import LoadingSubmitButton from "src/components/LoadingSubmitButton"
+import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
+import { login } from "src/requests/user"
+import { history } from "src/setup"
 import { flexCenteredColumn } from "src/styles"
 
 const LoginColumn = withStyles({
@@ -28,6 +34,10 @@ const LoginButtonRow = withStyles({
 })(FormControl)
 
 export function Login() {
+  const { enqueueSnackbar } = useSnackbar()
+  const [email, setEmail] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(false)
+
   return (
     <FullContentSpaceLayoutCentered>
       <Container maxWidth="sm">
@@ -35,8 +45,16 @@ export function Login() {
           <LoginColumn>
             <LoginColumnTitle variant="h4">Login</LoginColumnTitle>
             <form
-              onSubmit={function (ev) {
+              onSubmit={async function (ev) {
                 ev.preventDefault()
+                setIsLoading(true)
+                const result = await login({ email })
+                if (result instanceof Error) {
+                  enqueueSnackbar(result.message, { variant: "error" })
+                  setIsLoading(false)
+                } else {
+                  history.push(routes.home())
+                }
               }}
             >
               <FormControl fullWidth>
@@ -46,12 +64,13 @@ export function Login() {
                   name="email"
                   id="email"
                   aria-describedby="my-helper-text"
+                  onChange={function (ev) {
+                    setEmail(ev.target.value)
+                  }}
                 />
               </FormControl>
               <LoginButtonRow fullWidth>
-                <Button type="submit" variant="contained" color="primary">
-                  Login
-                </Button>
+                <LoadingSubmitButton {...{ isLoading }} />
               </LoginButtonRow>
             </form>
           </LoginColumn>

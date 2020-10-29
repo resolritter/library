@@ -8,6 +8,10 @@ import { routes } from "src/constants"
 import { history } from "src/setup"
 import userStore from "src/store/user"
 
+export const ButtonGap = function () {
+  return <Box width="1rem" />
+}
+
 export const MainAppBar = function () {
   const user = useSelector(function ({ user }) {
     return user.profile
@@ -29,15 +33,17 @@ export const MainAppBar = function () {
                 onClick={function () {
                   history.push(routes.login())
                 }}
-                color="inherit"
+                variant="contained"
               >
                 Login
               </Button>
+              <ButtonGap />
               <Button
                 onClick={function () {
                   history.push(routes.createUser())
                 }}
-                color="inherit"
+                variant="contained"
+                color="primary"
               >
                 Create user
               </Button>
@@ -46,11 +52,12 @@ export const MainAppBar = function () {
           {user && (
             <>
               <span>User: {user.email}</span>
+              <ButtonGap />
               <Button
                 onClick={function () {
                   dispatch(userStore.actions.setUser())
                 }}
-                color="inherit"
+                variant="contained"
               >
                 LOGOUT
               </Button>

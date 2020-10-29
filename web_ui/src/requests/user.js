@@ -5,6 +5,25 @@ import userStore from "src/store/user"
 
 import { getAccessToken, getCors, handleErrorResponse } from "."
 
+export const login = async function ({ email }) {
+  const response = await fetch(apiEndpoints.session(), {
+    method: "POST",
+    mode: getCors(),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+    }),
+  })
+
+  if (response.status === StatusCodes.CREATED) {
+    store.dispatch(userStore.actions.setUser(await response.json()))
+  } else {
+    return await handleErrorResponse(response)
+  }
+}
+
 export const createUser = async function ({ email, accessLevel }) {
   let accessMask
   if (accessLevel) {
@@ -31,7 +50,6 @@ export const createUser = async function ({ email, accessLevel }) {
 
   if (response.status === StatusCodes.CREATED) {
     store.dispatch(userStore.actions.setUser(await response.json()))
-    return { status: "ok" }
   } else {
     return await handleErrorResponse(response)
   }
