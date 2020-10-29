@@ -188,6 +188,9 @@ fn root(
             // TODO move this to "/book/:title/lease/:user_id"
             server.at("/book/:title").patch(resources::book::lease_book);
 
+            server.at("/user").post(resources::user::post);
+            //server.at("/auth/:id").post(resources::user::auth);
+
             let server_handle = async_std::task::spawn(server.listen(listen_addr));
             if let Some(signal_file) = signal_file {
                 std::fs::write(signal_file, "READY").unwrap();

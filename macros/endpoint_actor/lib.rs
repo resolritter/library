@@ -97,7 +97,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
                         msg.reply.send(match #function(&msg).await {
                             Ok(output) => Some(output),
                             err => {
-                                error!("{:#?}", err);
+                                log::error!("{:#?}", err);
                                 None
                             }
                         });

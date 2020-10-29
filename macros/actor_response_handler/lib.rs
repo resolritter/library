@@ -85,33 +85,38 @@ pub fn generate(input: TokenStream) -> TokenStream {
     }
 
     let actor = actor.unwrap();
-    let response_type = response_type.unwrap();
-    let actor_lock = Ident::new(&actor.to_string().to_ascii_uppercase(), Span::call_site());
-    let name = name.unwrap();
+    let actor_str = &actor.to_string();
+    let actor_msg = Ident::new(format!("{}Msg", actor_str).as_str(), Span::call_site());
+    let actor_lock = Ident::new(&actor_str.to_ascii_uppercase(), Span::call_site());
 
+    let name = name.unwrap();
     let mut parser_str = String::from("extract_");
     parser_str.push_str(&name.to_string());
     let parser = Ident::new(&parser_str, Span::call_site());
 
     let tag = tag.unwrap();
-    let mut tag_msg_str = tag.to_string();
-    tag_msg_str.push_str("Msg");
-    let tag_msg = Ident::new(&tag_msg_str, Span::call_site());
+    let tag_str = tag.to_string();
+    let tag_msg = Ident::new(
+        format!("{}{}Msg", actor_str, tag_str).as_str(),
+        Span::call_site(),
+    );
+
+    let response_type = response_type.unwrap();
 
     (quote! {
-    pub async fn #name(mut req: Request<ServerState>) -> tide::Result<Response> {
+    pub async fn #name(mut req: tide::Request<crate::entities::ServerState>) -> tide::Result<tide::Response> {
         #[allow(clippy::unnecessary_mut_passed)]
         let payload = #parser(&mut req).await?;
         let (reply, r) = crossbeam_channel::bounded::<Option<crate::resources::ResponseData<#response_type>>>(1);
         let state = req.state();
-        
-        #actor_lock
+
+        crate::messages::#actor_lock
             .get()
             .unwrap()
             .read()
             .as_ref()
             .unwrap()
-            .send(#tag(#tag_msg { reply, db_pool: state.global.db_pool, payload }))
+            .send(crate::messages::#actor_msg::#tag(crate::messages::#tag_msg { reply, db_pool: state.global.db_pool, payload }))
             .unwrap();
 
         crossbeam_channel::select! {

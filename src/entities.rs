@@ -10,6 +10,10 @@ pub struct ServerState {
     pub global: &'static Global,
 }
 
+pub struct EntityId {
+    id: i32,
+}
+
 structout::generate!(
     pub <> {
         pub id: i32,
@@ -20,8 +24,21 @@ structout::generate!(
     } => {
         Book => [attr(#[derive(Serialize, Debug)]), omit(lease_length)],
         BookSeed => [include(title)],
-        GetBookByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title)],
-        LeaseBookByTitleRequestBody => [attr(#[derive(Deserialize, Debug)]), include(lease_length)],
-        LeaseBookByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title), include(lease_length)]
+        BookGetByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title)],
+        BookLeaseByTitleRequestBody => [attr(#[derive(Deserialize, Debug)]), include(lease_length)],
+        BookLeaseByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title), include(lease_length)]
+    }
+);
+
+structout::generate!(
+    pub <> {
+        pub id: i32,
+        pub email: String,
+        pub password: String,
+        pub access_level: i32
+    } => {
+        UserPublic => [attr(#[derive(Serialize, Debug)]), omit(password)],
+        UserLoginPayload => [attr(#[derive(Deserialize, Debug)]), include(email), include(password)],
+        UserCreationPayload => [attr(#[derive(Deserialize, Debug)]), omit(id)],
     }
 );

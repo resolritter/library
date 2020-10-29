@@ -1,5 +1,5 @@
-#[macro_use]
 pub mod book;
+pub mod user;
 
 use serde::ser::Serialize;
 use tide::{Body, Response, StatusCode};

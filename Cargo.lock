@@ -1521,6 +1521,7 @@ dependencies = [
  "parking_lot",
  "refinery",
  "refinery-core",
+ "resource_messaging",
  "serde",
  "serde_json",
  "sqlx",
@@ -2276,6 +2277,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "resource_messaging"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

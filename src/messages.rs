@@ -1,42 +1,21 @@
-use crate::entities::{Book, GetBookByTitlePayload, LeaseBookByTitlePayload};
+use crate::entities::Book;
 use crate::logging::Loggable;
-use once_cell::sync::OnceCell;
-use parking_lot::RwLock;
-use std::fmt::Debug;
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
     Input,
     Book,
+    User,
 }
 
-macro_rules! define_message {
-    ($name: ident, $reply:ty, $payload: ty) => {
-        #[derive(Debug)]
-        pub struct $name {
-            pub reply: crossbeam_channel::Sender<Option<crate::resources::ResponseData<$reply>>>,
-            pub payload: $payload,
-            pub db_pool: &'static sqlx::PgPool,
-        }
-    };
-}
-define_message!(GetBookByTitleMsg, Book, GetBookByTitlePayload);
-define_message!(LeaseBookByTitleMsg, String, LeaseBookByTitlePayload);
-
-#[derive(Debug)]
-pub enum BookMsg {
-    GetBookByTitle(GetBookByTitleMsg),
-    LeaseBookByTitle(LeaseBookByTitleMsg),
-}
+resource_messaging::generate!(User, [(Creation, String)]);
+resource_messaging::generate!(Book, [(LeaseByTitle, String), (GetByTitle, Book)]);
 
 impl Loggable for BookMsg {
     fn to_log(&self) -> String {
         match self {
-            BookMsg::GetBookByTitle(msg) => format!("{:#?}", msg.payload),
-            BookMsg::LeaseBookByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::LeaseByTitle(msg) => format!("{:#?}", msg.payload),
         }
     }
 }
-
-pub static BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookMsg>>>> =
-    OnceCell::new();

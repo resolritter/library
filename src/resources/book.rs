@@ -1,18 +1,16 @@
 use crate::entities::{
-    Book, BookSeed, GetBookByTitlePayload, LeaseBookByTitlePayload, LeaseBookByTitleRequestBody,
+    Book, BookGetByTitlePayload, BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookSeed,
     ServerState,
 };
 use crate::logging::logged;
 use crate::messages::{
-    ActorGroups, BookMsg, BookMsg::*, GetBookByTitleMsg, LeaseBookByTitleMsg, BOOK,
+    ActorGroups, BookGetByTitleMsg, BookLeaseByTitleMsg, BookMsg, BookMsg::*, BOOK,
 };
 use crate::resources::ResponseData;
-use log::error;
-use sqlx::Done;
-use sqlx::Row;
 use sqlx::{postgres::PgRow, PgPool};
+use sqlx::{Done, Row};
 use std::time::SystemTime;
-use tide::{Request, Response, StatusCode};
+use tide::{Request, StatusCode};
 
 pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
     Ok(Book {
@@ -24,8 +22,8 @@ pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
 }
 
 #[inline(always)]
-async fn extract_get(req: &Request<ServerState>) -> tide::Result<GetBookByTitlePayload> {
-    Ok(GetBookByTitlePayload {
+async fn extract_get(req: &Request<ServerState>) -> tide::Result<BookGetByTitlePayload> {
+    Ok(BookGetByTitlePayload {
         title: req.param("title")?,
     })
 }
@@ -33,19 +31,19 @@ actor_response_handler::generate!(Config {
     name: get,
     actor: Book,
     response_type: Book,
-    tag: GetBookByTitle
+    tag: GetByTitle
 });
 
 #[inline(always)]
 async fn extract_lease_book(
     req: &mut Request<ServerState>,
-) -> tide::Result<LeaseBookByTitlePayload> {
-    let params = GetBookByTitlePayload {
+) -> tide::Result<BookLeaseByTitlePayload> {
+    let params = BookGetByTitlePayload {
         title: req.param("title")?,
     };
-    let body = req.body_json::<LeaseBookByTitleRequestBody>().await?;
+    let body = req.body_json::<BookLeaseByTitleRequestBody>().await?;
 
-    Ok(LeaseBookByTitlePayload {
+    Ok(BookLeaseByTitlePayload {
         title: params.title,
         lease_length: body.lease_length,
     })
@@ -54,11 +52,11 @@ actor_response_handler::generate!(Config {
     name: lease_book,
     actor: Book,
     response_type: String,
-    tag: LeaseBookByTitle
+    tag: LeaseByTitle
 });
 
 #[inline(always)]
-pub async fn get_by_title(msg: &GetBookByTitleMsg) -> Result<ResponseData<Book>, sqlx::Error> {
+pub async fn get_by_title(msg: &BookGetByTitleMsg) -> Result<ResponseData<Book>, sqlx::Error> {
     let raw = sqlx::query("SELECT * FROM book WHERE title=$1")
         .bind(&msg.payload.title)
         .fetch_optional(msg.db_pool)
@@ -72,7 +70,7 @@ pub async fn get_by_title(msg: &GetBookByTitleMsg) -> Result<ResponseData<Book>,
 }
 
 #[inline(always)]
-pub async fn lease_by_id(msg: &LeaseBookByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
+pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs(),
         Err(_) => panic!("SystemTime before UNIX EPOCH!"),
@@ -110,8 +108,8 @@ pub async fn lease_by_id(msg: &LeaseBookByTitleMsg) -> Result<ResponseData<Strin
 }
 
 endpoint_actor::generate!({ actor: Book }, {
-    GetBookByTitle: get_by_title,
-    LeaseBookByTitle: lease_by_id,
+    GetByTitle: get_by_title,
+    LeaseByTitle: lease_by_id,
 });
 
 pub fn seed_entities() -> [BookSeed; 3] {
