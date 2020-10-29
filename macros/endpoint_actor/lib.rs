@@ -85,6 +85,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
 
     let actor_lock = Ident::new(&actor_name.to_ascii_uppercase(), Span::call_site());
     let actor = Ident::new(&actor_name, Span::call_site());
+    let actor_msg = Ident::new(format!("{}Msg", &actor_name).as_str(), Span::call_site());
 
     let matches = delegations.iter().map(
         |Delegation {
@@ -94,7 +95,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
                 #variant(msg) => {
                     let _ =
                         msg.reply.send(match #function(&msg).await {
-                            Ok(output) => output,
+                            Ok(output) => Some(output),
                             err => {
                                 error!("{:#?}", err);
                                 None
@@ -110,7 +111,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
             children
                 .with_name(ActorGroups::#actor.as_ref())
                 .with_exec(move |_| async move {
-                    let (channel, r) = crossbeam_channel::unbounded::<BookMsg>();
+                    let (channel, r) = crossbeam_channel::unbounded::<#actor_msg>();
                     {
                         let mut lock = #actor_lock.get().unwrap().write();
                         *lock = Some(channel);
