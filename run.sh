@@ -50,7 +50,8 @@ while [[ "$#" -gt 0 ]]; do
     # options
     --db-port) export APP_DB_PORT=$2; shift ;;
     --instance) export APP_INSTANCE="$2"; shift ;;
-    --dir) export APP_DIR="$2"; shift ;;
+    --dir) export APP_DIR="$2"; shift;;
+    --port) export APP_PORT="$2"; shift;;
     # forwarded arguments
     --listen|--admin-credentials-for-test|--signal-file) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
     --reset-before-run) RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1";;
@@ -106,6 +107,10 @@ run_server () {
   cargo run -- --db-url="$DB_URL" $RUN_SERVER_EXTRA
 }
 
+clean_test_server () {
+  mc_delete "port_taken_$APP_PORT"
+}
+
 case "$CMD" in
   test_db)
     export APP_DB_PORT="$(get_available_port)"
@@ -114,6 +119,7 @@ case "$CMD" in
   ;;
   test_server)
     RUN_SERVER_EXTRA="--log-dir="$LOG_DIR" --log-format="test" $RUN_SERVER_EXTRA"
+    trap clean_test_server EXIT HUP INT QUIT TERM
     run_server
   ;;
   db)
