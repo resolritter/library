@@ -1,7 +1,7 @@
-use crate::messages::{UserCreationMsg, UserLoginMsg};
+use crate::messages::{UserCreateMsg, UserLoginMsg};
 use crate::resources::ResponseData;
 use crate::state::ServerState;
-use entities::{access_mask, User, UserCreationPayload, UserLoginPayload};
+use entities::{access_mask, User, UserCreatePayload, UserLoginPayload};
 use sqlx::postgres::{PgDone, PgPool, PgRow};
 use sqlx::Row;
 use tide::{Request, StatusCode};
@@ -21,21 +21,6 @@ pub async fn check_access_token(access_token: &str, db_pool: &PgPool) -> Result<
             .fetch_one(db_pool)
             .await?
             .try_get::<bool, usize>(0)?,
-    )
-}
-
-pub async fn create_super_user(
-    email: &str,
-    access_token: &str,
-    db_pool: &PgPool,
-) -> Result<PgDone, sqlx::Error> {
-    Ok(
-        sqlx::query(r#"INSERT INTO "user" (email, access_token, access_mask) VALUES ($1, $2, $3)"#)
-            .bind(email)
-            .bind(access_token)
-            .bind(access_mask::ADMIN)
-            .execute(db_pool)
-            .await?,
     )
 }
 
@@ -80,8 +65,8 @@ actor_response_handler::generate!({
 });
 
 #[inline(always)]
-pub async fn create_user(
-    msg: &UserCreationMsg,
+pub async fn create(
+    msg: &UserCreateMsg,
 ) -> Result<ResponseData<Result<User, String>>, sqlx::Error> {
     let is_authorized = match &msg.payload.requester_access_token {
         Some(token) => check_access_mask(token, access_mask::ADMIN, msg.db_pool).await?,
@@ -122,17 +107,32 @@ pub async fn create_user(
     }
 }
 #[inline(always)]
-async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreationPayload> {
-    Ok(req.body_json::<UserCreationPayload>().await?)
+async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<UserCreatePayload> {
+    Ok(req.body_json::<UserCreatePayload>().await?)
 }
 actor_response_handler::generate!({
     name: post,
     actor: User,
     response_type: Result<User, String>,
-    tag: Creation
+    tag: Create
 });
 
 endpoint_actor::generate!({ actor: User }, {
-    Creation: create_user,
+    Create: create,
     Login: create_session,
 });
+
+pub async fn create_super_user(
+    email: &str,
+    access_token: &str,
+    db_pool: &PgPool,
+) -> Result<PgDone, sqlx::Error> {
+    Ok(
+        sqlx::query(r#"INSERT INTO "user" (email, access_token, access_mask) VALUES ($1, $2, $3)"#)
+            .bind(email)
+            .bind(access_token)
+            .bind(access_mask::ADMIN)
+            .execute(db_pool)
+            .await?,
+    )
+}

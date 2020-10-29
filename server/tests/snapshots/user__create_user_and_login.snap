@@ -5,7 +5,7 @@ expression: read_snapshot(&log_dir)
 UserLoginPayload {
     email: "DOES_NOT_EXIST@user.com",
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "simple@user.com",
     access_mask: 1,
     requester_access_token: None,

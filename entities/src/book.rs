@@ -1,5 +1,5 @@
 use crate::data::{
-    Book, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload,
+    Book, BookBorrowByTitlePayload, BookCreatePayload, BookEndBorrowByTitlePayload,
     BookOkResponse, BookPublic,
 };
 use crate::{
@@ -46,7 +46,7 @@ pub async fn end_borrow(server_addr: &str, payload: &BookEndBorrowByTitlePayload
     r
 }
 
-pub fn do_post(server_addr: &str, payload: &BookCreationPayload) -> RequestBuilder {
+pub fn do_create(server_addr: &str, payload: &BookCreatePayload) -> RequestBuilder {
     surf::post(format!(
         concat!(server_root!(), book_route_root!()),
         server_addr
@@ -55,8 +55,8 @@ pub fn do_post(server_addr: &str, payload: &BookCreationPayload) -> RequestBuild
     .header("X-Auth", payload.access_token.clone())
     .content_type(JSON)
 }
-pub async fn post(server_addr: &str, payload: &BookCreationPayload) -> (String, Book) {
-    let mut response = do_post(server_addr, payload).await.unwrap();
+pub async fn create(server_addr: &str, payload: &BookCreatePayload) -> (String, Book) {
+    let mut response = do_create(server_addr, payload).await.unwrap();
     assert!(response.status() == StatusCode::Created);
     let str_body = response.body_string().await.unwrap();
     let value = serde_json::from_str::<BookOkResponse>(&str_body).unwrap();

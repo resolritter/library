@@ -11,7 +11,7 @@ use test_utils::{
 
 #[async_std::test]
 async fn test_create_and_get() {
-    use entities::{book, user, BookCreationPayload, UserCreationPayload};
+    use entities::{book, user, BookCreatePayload, UserCreatePayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -23,7 +23,7 @@ async fn test_create_and_get() {
 
     let (_, normal_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "normal@user.com".to_string(),
             access_mask: access_mask::USER,
             requester_access_token: None,
@@ -31,9 +31,9 @@ async fn test_create_and_get() {
     )
     .await;
     // A normal user is not able to create books
-    let bad_unauthorized_creation = book::do_post(
+    let bad_unauthorized_creation = book::do_create(
         &server_addr,
-        &BookCreationPayload {
+        &BookCreatePayload {
             access_token: normal_user.access_token.to_string(),
             title: "TEST".to_string(),
         },
@@ -45,16 +45,16 @@ async fn test_create_and_get() {
     // Create a LIBRARIAN type of user for book creation
     let (_, librarian) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
             requester_access_token: Some(ADMIN_ACCESS_TOKEN.to_string()),
         },
     )
     .await;
-    let (_, new_book) = book::post(
+    let (_, new_book) = book::create(
         &server_addr,
-        &BookCreationPayload {
+        &BookCreatePayload {
             access_token: librarian.access_token.to_string(),
             title: "TEST".to_string(),
         },
@@ -68,7 +68,7 @@ async fn test_create_and_get() {
 #[async_std::test]
 async fn test_borrow() {
     use entities::{
-        book, user, BookBorrowByTitlePayload, BookCreationPayload, UserCreationPayload,
+        book, user, BookBorrowByTitlePayload, BookCreatePayload, UserCreatePayload,
     };
 
     let test_name = format_test_name(function_name!());
@@ -80,9 +80,9 @@ async fn test_borrow() {
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
-    let (_, book) = book::post(
+    let (_, book) = book::create(
         &server_addr,
-        &BookCreationPayload {
+        &BookCreatePayload {
             access_token: ADMIN_ACCESS_TOKEN.to_string(),
             title: "Cinderella".to_string(),
         },
@@ -90,7 +90,7 @@ async fn test_borrow() {
     .await;
     let (_, first_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "simple@user.com".to_string(),
             access_mask: access_mask::USER,
             requester_access_token: None,
@@ -131,8 +131,8 @@ async fn test_borrow() {
 #[async_std::test]
 async fn test_end_borrow() {
     use entities::{
-        book, user, BookBorrowByTitlePayload, BookCreationPayload, BookEndBorrowByTitlePayload,
-        UserCreationPayload,
+        book, user, BookBorrowByTitlePayload, BookCreatePayload, BookEndBorrowByTitlePayload,
+        UserCreatePayload,
     };
 
     let test_name = format_test_name(function_name!());
@@ -144,9 +144,9 @@ async fn test_end_borrow() {
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
-    let (_, book) = book::post(
+    let (_, book) = book::create(
         &server_addr,
-        &BookCreationPayload {
+        &BookCreatePayload {
             access_token: ADMIN_ACCESS_TOKEN.to_string(),
             title: "Cinderella".to_string(),
         },
@@ -154,7 +154,7 @@ async fn test_end_borrow() {
     .await;
     let (_, first_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "first@user.com".to_string(),
             access_mask: access_mask::USER,
             requester_access_token: None,
@@ -163,7 +163,7 @@ async fn test_end_borrow() {
     .await;
     let (_, second_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "second@user.com".to_string(),
             access_mask: access_mask::USER,
             requester_access_token: None,
@@ -206,7 +206,7 @@ async fn test_end_borrow() {
     // Librarians will be able to end the borrow on the behalf of normal users
     let (_, librarian_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
             requester_access_token: Some(ADMIN_ACCESS_TOKEN.to_string()),
@@ -227,7 +227,7 @@ async fn test_end_borrow() {
 
 #[async_std::test]
 async fn test_list() {
-    use entities::{book, BookCreationPayload};
+    use entities::{book, BookCreatePayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -237,9 +237,9 @@ async fn test_list() {
         process: _,
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
-    let (_, book) = book::post(
+    let (_, book) = book::create(
         &server_addr,
-        &BookCreationPayload {
+        &BookCreatePayload {
             access_token: ADMIN_ACCESS_TOKEN.to_string(),
             title: "Cinderella".to_string(),
         },

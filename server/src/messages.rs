@@ -8,14 +8,14 @@ pub enum ActorGroups {
     User,
 }
 
-resource_messaging::generate!(User, [(Creation, Result<User, String>), (Login, User)]);
+resource_messaging::generate!(User, [(Create, Result<User, String>), (Login, User)]);
 resource_messaging::generate!(
     Book,
     [
         (BorrowByTitle, String),
         (GetByTitle, Book),
         (EndBorrowByTitle, ()),
-        (Creation, Result<Book, String>),
+        (Create, Result<Book, String>),
         (PublicList, Vec<BookPublic>),
     ]
 );
@@ -26,7 +26,7 @@ impl Loggable for BookMsg {
             BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::BorrowByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::EndBorrowByTitle(msg) => format!("{:#?}", msg.payload),
-            BookMsg::Creation(msg) => format!("{:#?}", msg.payload),
+            BookMsg::Create(msg) => format!("{:#?}", msg.payload),
             BookMsg::PublicList(msg) => format!("{:#?}", msg.payload),
         }
     }
@@ -35,7 +35,7 @@ impl Loggable for BookMsg {
 impl Loggable for UserMsg {
     fn to_log(&self) -> String {
         match self {
-            UserMsg::Creation(msg) => format!("{:#?}", msg.payload),
+            UserMsg::Create(msg) => format!("{:#?}", msg.payload),
             UserMsg::Login(msg) => format!("{:#?}", msg.payload),
         }
     }

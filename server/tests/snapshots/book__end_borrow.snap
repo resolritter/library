@@ -2,16 +2,16 @@
 source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
-BookCreationPayload {
+BookCreatePayload {
     title: "Cinderella",
     access_token: "admin_access_token",
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "first@user.com",
     access_mask: 1,
     requester_access_token: None,
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "second@user.com",
     access_mask: 1,
     requester_access_token: None,
@@ -34,7 +34,7 @@ BookBorrowByTitlePayload {
     borrow_length: 86400,
     borrow_id: "second@user.com",
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "librarian@user.com",
     access_mask: 17,
     requester_access_token: Some(

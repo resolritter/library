@@ -11,7 +11,7 @@ use test_utils::{
 
 #[async_std::test]
 async fn test_create_user_and_login() {
-    use entities::{user, UserCreationPayload, UserLoginPayload};
+    use entities::{user, UserCreatePayload, UserLoginPayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -34,7 +34,7 @@ async fn test_create_user_and_login() {
     // Creates a simple user
     let (_, user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "simple@user.com".to_string(),
             access_mask: access_mask::USER,
             requester_access_token: None,
@@ -57,7 +57,7 @@ async fn test_create_user_and_login() {
 
 #[async_std::test]
 async fn test_create_user() {
-    use entities::{user, UserCreationPayload};
+    use entities::{user, UserCreatePayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -69,7 +69,7 @@ async fn test_create_user() {
 
     user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
             // Administrators can create librarians
@@ -79,7 +79,7 @@ async fn test_create_user() {
     .await;
     let (_, simple_user) = user::create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "simple@user.com".to_string(),
             access_mask: access_mask::USER,
             // Normal user creation does not require any sort of special access
@@ -91,7 +91,7 @@ async fn test_create_user() {
     // Normal users should not be able to create any sort of special user
     let bad_forbidden_request_admin = user::do_create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "new_ADMIN@user.com".to_string(),
             access_mask: access_mask::ADMIN,
             requester_access_token: Some(simple_user.access_token.clone()),
@@ -101,7 +101,7 @@ async fn test_create_user() {
     assert!(bad_forbidden_request_admin.status() == StatusCode::Forbidden);
     let bad_forbidden_request_librarian = user::do_create(
         &server_addr,
-        &UserCreationPayload {
+        &UserCreatePayload {
             email: "new_LIBRARIAN@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
             requester_access_token: Some(simple_user.access_token.clone()),

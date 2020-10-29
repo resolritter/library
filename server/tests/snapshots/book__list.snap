@@ -2,7 +2,7 @@
 source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
-BookCreationPayload {
+BookCreatePayload {
     title: "Cinderella",
     access_token: "admin_access_token",
 }

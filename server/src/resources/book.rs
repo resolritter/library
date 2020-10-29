@@ -1,14 +1,14 @@
 use crate::auth::require_auth_token;
 use crate::messages::{
-    BookBorrowByTitleMsg, BookCreationMsg, BookEndBorrowByTitleMsg, BookGetByTitleMsg,
+    BookBorrowByTitleMsg, BookCreateMsg, BookEndBorrowByTitleMsg, BookGetByTitleMsg,
     BookPublicListMsg,
 };
 use crate::resources::user::check_access_mask;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
-    access_mask, Book, BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookCreationPayload,
-    BookCreationPayloadRequestBody, BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic,
+    access_mask, Book, BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookCreatePayload,
+    BookCreatePayloadRequestBody, BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic,
     BookPublicListPayload,
 };
 use percent_encoding::percent_decode;
@@ -135,7 +135,7 @@ actor_response_handler::generate!({
 
 #[inline(always)]
 pub async fn create(
-    msg: &BookCreationMsg,
+    msg: &BookCreateMsg,
 ) -> Result<ResponseData<Result<Book, String>>, sqlx::Error> {
     let is_authorized = check_access_mask(
         &msg.payload.access_token,
@@ -173,11 +173,11 @@ pub async fn create(
     }
 }
 #[inline(always)]
-async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
+async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreatePayload> {
     match require_auth_token(&req).await {
         (StatusCode::Ok, Some(access_token)) => {
-            let body = req.body_json::<BookCreationPayloadRequestBody>().await?;
-            Ok(BookCreationPayload {
+            let body = req.body_json::<BookCreatePayloadRequestBody>().await?;
+            Ok(BookCreatePayload {
                 title: body.title,
                 access_token,
             })
@@ -189,11 +189,13 @@ actor_response_handler::generate!({
     name: post,
     actor: Book,
     response_type: Result<Book, String>,
-    tag: Creation
+    tag: Create
 });
 
 #[inline(always)]
-pub async fn borrow_by_id(msg: &BookBorrowByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
+pub async fn borrow_by_title(
+    msg: &BookBorrowByTitleMsg,
+) -> Result<ResponseData<String>, sqlx::Error> {
     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs(),
         Err(_) => panic!("SystemTime before UNIX EPOCH!"),
@@ -261,7 +263,7 @@ actor_response_handler::generate!({
 });
 
 #[inline(always)]
-pub async fn public_list_by_query(
+pub async fn list_public(
     msg: &BookPublicListMsg,
 ) -> Result<ResponseData<Vec<BookPublic>>, sqlx::Error> {
     let result = if let Some(title_query) = &msg.payload.query {
@@ -294,10 +296,10 @@ actor_response_handler::generate!({
 
 endpoint_actor::generate!({ actor: Book }, {
     GetByTitle: get_by_title,
-    BorrowByTitle: borrow_by_id,
+    BorrowByTitle: borrow_by_title,
     EndBorrowByTitle: end_borrow_by_title,
-    Creation: create,
-    PublicList: public_list_by_query
+    Create: create,
+    PublicList: list_public
 });
 
 pub async fn seed(pool: &PgPool) -> Vec<Book> {

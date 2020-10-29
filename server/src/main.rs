@@ -228,7 +228,6 @@ fn root(
                 .delete(resources::book::end_borrow);
 
             server.at(session_route!()).post(resources::user::login);
-
             server
                 .at(entities::user::USER_ROUTE)
                 .post(resources::user::post);

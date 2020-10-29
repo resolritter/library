@@ -2,30 +2,29 @@
 source: server/tests/user.rs
 expression: read_snapshot(&log_dir)
 ---
-UserCreationPayload {
+UserCreatePayload {
     email: "librarian@user.com",
     access_mask: 17,
     requester_access_token: Some(
         "admin_access_token",
     ),
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "simple@user.com",
     access_mask: 1,
     requester_access_token: None,
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "new_ADMIN@user.com",
     access_mask: 273,
     requester_access_token: Some(
         "simple@user.com",
     ),
 }
-UserCreationPayload {
+UserCreatePayload {
     email: "new_LIBRARIAN@user.com",
     access_mask: 17,
     requester_access_token: Some(
         "simple@user.com",
     ),
 }
-
