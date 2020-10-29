@@ -1532,6 +1532,7 @@ dependencies = [
  "log",
  "once_cell",
  "parking_lot",
+ "percent-encoding",
  "refinery",
  "refinery-core",
  "resource_messaging",

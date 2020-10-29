@@ -10,6 +10,7 @@ use entities::{
     access_mask, Book, BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookCreationPayload,
     BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic, BookPublicListPayload,
 };
+use percent_encoding::percent_decode;
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
 use tide::{Request, StatusCode};
@@ -71,16 +72,25 @@ pub async fn end_borrow_by_title(
         Ok(ResponseData(StatusCode::NotFound, None))
     }
 }
+
 #[inline(always)]
 async fn extract_end_borrow(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookEndBorrowByTitlePayload> {
     match require_auth_token(&req).await {
-        (StatusCode::Ok, Some(access_token)) => Ok(BookEndBorrowByTitlePayload {
-            title: req.param("title")?,
-            borrow_id: req.param("borrow_id")?,
-            access_token,
-        }),
+        (StatusCode::Ok, Some(access_token)) => {
+            match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {
+                Ok(title) => Ok(BookEndBorrowByTitlePayload {
+                    title: title.to_string(),
+                    borrow_id: req.param("borrow_id")?,
+                    access_token,
+                }),
+                _ => Err(tide::Error::from_str(
+                    StatusCode::UnprocessableEntity,
+                    "Invalid title",
+                )),
+            }
+        }
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
@@ -106,9 +116,15 @@ pub async fn get_by_title(msg: &BookGetByTitleMsg) -> Result<ResponseData<Book>,
 }
 #[inline(always)]
 async fn extract_get(req: &Request<ServerState>) -> tide::Result<BookGetByTitlePayload> {
-    Ok(BookGetByTitlePayload {
-        title: req.param("title")?,
-    })
+    match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {
+        Ok(title) => Ok(BookGetByTitlePayload {
+            title: title.to_string(),
+        }),
+        _ => Err(tide::Error::from_str(
+            StatusCode::UnprocessableEntity,
+            "Invalid title",
+        )),
+    }
 }
 actor_response_handler::generate!(Config {
     name: get,
@@ -196,12 +212,17 @@ async fn extract_borrow_book(
     match require_auth_token(&req).await {
         (StatusCode::Ok, Some(_)) => {
             let body = req.body_json::<BookBorrowByTitleRequestBody>().await?;
-
-            Ok(BookBorrowByTitlePayload {
-                title: req.param("title")?,
-                borrow_length: body.borrow_length,
-                borrow_id: body.borrow_id,
-            })
+            match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {
+                Ok(title) => Ok(BookBorrowByTitlePayload {
+                    title: title.to_string(),
+                    borrow_length: body.borrow_length,
+                    borrow_id: body.borrow_id,
+                }),
+                _ => Err(tide::Error::from_str(
+                    StatusCode::UnprocessableEntity,
+                    "Invalid title",
+                )),
+            }
         }
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
