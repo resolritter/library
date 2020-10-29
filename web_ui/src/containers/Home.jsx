@@ -1,11 +1,11 @@
 import React from "react"
 import {
   Button,
+  Container,
   Paper,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   withStyles,
@@ -79,89 +79,91 @@ export function Home() {
   }
 
   return (
-    <TableContainer component={Paper}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Title</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell></TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {books.map(function ({ title, borrow_until }, i) {
-            const canBeBorrowed = !borrow_until
-            const borrowedUntilDate = new Date(borrow_until * 1000)
-            const isBorrowBookShown = user && canBeBorrowed
-            const isCancelBorrowBookShown =
-              !isBorrowBookShown &&
-              user &&
-              (userAPIAccessLevels.librarian & user.access_mask) ==
-                userAPIAccessLevels.librarian
+    <Container maxWidth="lg" style={{ marginTop: "2rem" }}>
+      <Paper>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Title</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell></TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {books.map(function ({ title, borrow_until }, i) {
+              const canBeBorrowed = !borrow_until
+              const borrowedUntilDate = new Date(borrow_until * 1000)
+              const isBorrowBookShown = user && canBeBorrowed
+              const isCancelBorrowBookShown =
+                !isBorrowBookShown &&
+                user &&
+                (userAPIAccessLevels.librarian & user.access_mask) ==
+                  userAPIAccessLevels.librarian
 
-            const borrowButton = (
-              <Button
-                key="borrowButton"
-                variant="contained"
-                color="primary"
-                onClick={function () {
-                  handleWithSnackbar(borrowBook(user, { title }), reloadBooks)
-                }}
-                style={
-                  isBorrowBookShown
-                    ? undefined
-                    : { opacity: 0, pointerEvents: "none", cursor: "none" }
-                }
-              >
-                Borrow
-              </Button>
-            )
-            const cancelBorrowButton = (
-              <Button
-                key="cancelBorrowButton"
-                variant="contained"
-                color="secondary"
-                onClick={function () {
-                  handleWithSnackbar(
-                    endBookBorrow(user, { title }),
-                    reloadBooks,
-                  )
-                }}
-                style={
-                  isCancelBorrowBookShown
-                    ? undefined
-                    : { opacity: 0, pointerEvents: "none", cursor: "none" }
-                }
-              >
-                Cancel Borrow
-              </Button>
-            )
-            const buttons = isCancelBorrowBookShown
-              ? [cancelBorrowButton, borrowButton]
-              : [borrowButton, cancelBorrowButton]
+              const borrowButton = (
+                <Button
+                  key="borrowButton"
+                  variant="contained"
+                  color="primary"
+                  onClick={function () {
+                    handleWithSnackbar(borrowBook(user, { title }), reloadBooks)
+                  }}
+                  style={
+                    isBorrowBookShown
+                      ? undefined
+                      : { opacity: 0, pointerEvents: "none", cursor: "none" }
+                  }
+                >
+                  Borrow
+                </Button>
+              )
+              const cancelBorrowButton = (
+                <Button
+                  key="cancelBorrowButton"
+                  variant="contained"
+                  color="secondary"
+                  onClick={function () {
+                    handleWithSnackbar(
+                      endBookBorrow(user, { title }),
+                      reloadBooks,
+                    )
+                  }}
+                  style={
+                    isCancelBorrowBookShown
+                      ? undefined
+                      : { opacity: 0, pointerEvents: "none", cursor: "none" }
+                  }
+                >
+                  Cancel Borrow
+                </Button>
+              )
+              const buttons = isCancelBorrowBookShown
+                ? [cancelBorrowButton, borrowButton]
+                : [borrowButton, cancelBorrowButton]
 
-            return (
-              <TableRow hover key={i}>
-                <TableCell>{title}</TableCell>
-                <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
-                  {canBeBorrowed ? (
-                    "Available"
-                  ) : (
-                    <span>
-                      <b>Borrowed</b> until{" "}
-                      {borrowedUntilDate.toString().slice(0, 16)}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
-                  {buttons}
-                </TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
+              return (
+                <TableRow hover key={i}>
+                  <TableCell>{title}</TableCell>
+                  <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
+                    {canBeBorrowed ? (
+                      "Available"
+                    ) : (
+                      <span>
+                        <b>Borrowed</b> until{" "}
+                        {borrowedUntilDate.toString().slice(0, 16)}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
+                    {buttons}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </Paper>
+    </Container>
   )
 }
 
