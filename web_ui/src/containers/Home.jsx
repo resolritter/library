@@ -80,45 +80,51 @@ export function Home() {
             <TableRow>
               <TableHeaderCell>Title</TableHeaderCell>
               <TableHeaderCell>Availability</TableHeaderCell>
-              <TableHeaderCell></TableHeaderCell>
+              <TableHeaderCell size="small"></TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {books.map(function ({ title, borrow_until }, i) {
               const canBeBorrowed = !borrow_until
-              console.log(books[i], user)
+              const borrowedUntilDate = new Date(borrow_until * 1000)
               return (
                 <TableRow hover key={i}>
                   <TableCell>{title}</TableCell>
                   <TableCell>
-                    {canBeBorrowed ? "Can be borrowed" : borrow_until}
-                  </TableCell>
-                  <TableCell>
-                    {user && canBeBorrowed && (
-                      <div>
-                        <Button
-                          onClick={async function () {
-                            borrowBook({ title, email: user.email })
-                              .then(function (result) {
-                                if (result instanceof Error) {
-                                  enqueueSnackbar(result.message, {
-                                    variant: "error",
-                                  })
-                                } else {
-                                  reloadBooks()
-                                }
-                              })
-                              .catch(function (err) {
-                                enqueueSnackbar(err.message, {
-                                  variant: "error",
-                                })
-                              })
-                          }}
-                        >
-                          Borrow
-                        </Button>
-                      </div>
+                    {canBeBorrowed ? (
+                      "Can be borrowed"
+                    ) : (
+                      <span>
+                        <b>Borrowed</b> until{" "}
+                        {borrowedUntilDate.toString().slice(0, 16)}
+                      </span>
                     )}
+                  </TableCell>
+                  <TableCell size="small">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={async function () {
+                        borrowBook({ title, email: user.email })
+                          .then(function (result) {
+                            if (result instanceof Error) {
+                              enqueueSnackbar(result.message, {
+                                variant: "error",
+                              })
+                            } else {
+                              reloadBooks()
+                            }
+                          })
+                          .catch(function (err) {
+                            enqueueSnackbar(err.message, {
+                              variant: "error",
+                            })
+                          })
+                      }}
+                      style={{ opacity: user && canBeBorrowed ? 1 : 0 }}
+                    >
+                      Borrow
+                    </Button>
                   </TableCell>
                 </TableRow>
               )
