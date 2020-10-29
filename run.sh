@@ -6,7 +6,7 @@ db_deps () {
 }
 
 db_vars () {
-  export DB_URL="postgresql://localhost:5432/library"
+  export DB_URL="postgresql://localhost:5432/library?user=postgres"
 }
 
 run_server () {
@@ -21,6 +21,9 @@ case "$1" in
   ;;
   server)
     run_server
+  ;;
+  seed)
+    RESET_AND_SEED=1 run_server
   ;;
   *)
     if [ "$1" ]; then

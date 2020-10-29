@@ -1,5 +1,6 @@
 mod entities;
 mod messages;
+mod migrations;
 mod resources;
 
 use crate::messages::{ActorGroups, BOOK};
@@ -23,14 +24,29 @@ macro_rules! init_actors {
 
 #[async_std::main]
 async fn main() {
-    // Initialize the global, read-only, static environment
-    let db_url: &'static str = &*Box::leak(Box::new(std::env::var("DB_URL").unwrap()));
-    let db_pool_ptr: &'static PgPool = Box::leak(Box::new(
+    // Initialize the database environment
+    let db_url = std::env::var("DB_URL").unwrap();
+    let is_reset_and_seed = std::env::var("RESET_AND_SEED").is_ok();
+
+    if is_reset_and_seed {
+        use sqlx::any::Any;
+        use sqlx::migrate::MigrateDatabase;
+        if Any::database_exists(&db_url).await.unwrap() {
+            Any::drop_database(&db_url).await.unwrap();
+        }
+        Any::create_database(&db_url).await.unwrap();
+    }
+
+    // Set up the database
+    let db_pool_ptr: &'static PgPool = &*Box::leak(Box::new(
         PgPoolOptions::new().connect(&db_url).await.unwrap(),
     ));
     let db_pool: &'static PgPool = &*Box::leak(Box::new(db_pool_ptr));
+    setup_database(&db_url, db_pool, is_reset_and_seed).await;
+
+    // Initialize the global, read-only, static environment
     GLOBAL
-        .set(&*Box::leak(Box::new(Global { db_pool, db_url })))
+        .set(&*Box::leak(Box::new(Global { db_pool })))
         .unwrap();
 
     // Initialize the actors
@@ -74,4 +90,22 @@ fn root(children: Children) -> Children {
 
             Ok(())
         })
+}
+
+async fn setup_database(db_url: &str, pool: &PgPool, is_reset_and_seed: bool) {
+    use refinery_core::postgres::{Client, NoTls};
+    let mut client = Client::connect(db_url, NoTls).unwrap();
+
+    let reports = crate::migrations::runner().run(&mut client).unwrap();
+    for applied in reports.applied_migrations() {
+        println!(
+            "DB Migration Applied - Name: {}, Version: {}",
+            applied.name(),
+            applied.version()
+        );
+    }
+
+    if is_reset_and_seed {
+        resources::book::seed(pool).await;
+    }
 }

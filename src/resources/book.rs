@@ -1,9 +1,17 @@
-use crate::entities::{Book, GetBookByTitlePayload, ServerState};
+use crate::entities::{Book, BookSeed, GetBookByTitlePayload, ServerState};
 use crate::messages::{ActorGroups, BookMsg, BookMsg::*, GetBookByTitleMsg, BOOK};
 use crate::resources::respond_with;
 use bastion::prelude::*;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
+use sqlx::{postgres::PgRow, PgPool};
 use tide::{Request, Response};
+
+pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
+    Ok(Book {
+        id: row.try_get("id")?,
+        title: row.try_get("title")?,
+    })
+}
 
 #[inline(always)]
 pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Result<Option<Book>, sqlx::Error> {
@@ -13,10 +21,7 @@ pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Result<Option<Boo
         .await?;
 
     if let Some(row) = raw {
-        Ok(Some(Book {
-            id: row.try_get("id")?,
-            title: row.try_get("title")?,
-        }))
+        Ok(Some(from_row(&row)?))
     } else {
         Ok(None)
     }
@@ -28,6 +33,11 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
     };
     let (reply, r) = crossbeam_channel::bounded::<Option<Book>>(1);
     let state = req.state();
+    let payload = GetByTitle(GetBookByTitleMsg {
+        reply,
+        payload,
+        db_pool: state.global.db_pool,
+    });
 
     unsafe {
         BOOK.get()
@@ -35,11 +45,7 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
             .read()
             .as_ref()
             .unwrap()
-            .send(GetByTitle(GetBookByTitleMsg {
-                reply,
-                payload,
-                db_pool: state.global.db_pool,
-            }))
+            .send(payload)
             .unwrap();
     }
 
@@ -91,4 +97,35 @@ pub fn actor(children: Children) -> Children {
             #[allow(unreachable_code)]
             Ok(())
         })
+}
+
+pub fn seed_entities() -> [BookSeed; 3] {
+    [
+        BookSeed {
+            title: "Cinderella".to_string(),
+        },
+        BookSeed {
+            title: "Rapunzel".to_string(),
+        },
+        BookSeed {
+            title: "Snow White".to_string(),
+        },
+    ]
+}
+
+pub async fn seed(pool: &PgPool) -> Vec<Book> {
+    let seeding = seed_entities();
+    let titles = &seeding
+        .iter()
+        .map(|b| b.title.clone())
+        .collect::<Vec<String>>();
+
+    sqlx::query("INSERT INTO book (title) VALUES (UNNEST($1::TEXT[])) RETURNING *")
+        .bind(titles)
+        .fetch_all(pool)
+        .await
+        .unwrap()
+        .iter()
+        .map(|b| from_row(b).unwrap())
+        .collect()
 }

@@ -2,7 +2,6 @@ use serde::Serialize;
 
 #[derive(Debug)]
 pub struct Global {
-    pub db_url: &'static str,
     pub db_pool: &'static sqlx::PgPool,
 }
 
@@ -14,9 +13,10 @@ pub struct ServerState {
 structout::generate!(
     pub <> {
         pub id: i32,
-        pub title: String,
+        pub title: String
     } => {
-        Book => [attr(#[derive(Serialize, Debug)])],
-        GetBookByTitlePayload => [omit(id), attr(#[derive(Serialize, Debug)])]
+        Book => [attr(#[derive(Serialize, Debug, Default)])],
+        BookSeed => [omit(id), omit(lease_id), omit(leased_until)],
+        GetBookByTitlePayload => [attr(#[derive(Serialize, Debug)]), omit(id), omit(lease_id), omit(leased_until)]
     }
 );
