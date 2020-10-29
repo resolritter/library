@@ -1,11 +1,9 @@
 use crate::data::{User, UserCreatePayload, UserLoginPayload, UserOkResponse};
-use crate::{server_root, session_route};
+use crate::{server_root, session_route, user_route};
 use surf::{self, http::mime::JSON, Response, StatusCode};
 
-pub const USER_ROUTE: &str = "user";
-
 pub async fn do_create(server_addr: &str, payload: &UserCreatePayload) -> Response {
-    surf::post(format!("{}/{}", server_addr, USER_ROUTE))
+    surf::post(format!(concat!(server_root!(), user_route!()), server_addr))
         .body(serde_json::json!(payload))
         .content_type(JSON)
         .await

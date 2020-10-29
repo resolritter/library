@@ -11,6 +11,7 @@ use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
 use entities::{
     book_borrow_route, book_route, book_route_root, books_route, books_route_root, session_route,
+    user_route,
 };
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
@@ -233,9 +234,7 @@ fn root(
                 .delete(resources::book::end_borrow);
 
             server.at(session_route!()).post(resources::user::login);
-            server
-                .at(entities::user::USER_ROUTE)
-                .post(resources::user::post);
+            server.at(user_route!()).post(resources::user::post);
 
             let server_handle = async_std::task::spawn(server.listen(listen_addr));
             if let Some(signal_file) = signal_file {
