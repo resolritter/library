@@ -7,7 +7,7 @@ export default createSlice({
   initialState,
   reducers: {
     addBooks: function (state, { payload: books }) {
-      state.items = state.items.concat(books)
+      state.items = books
     },
   },
 })
