@@ -10,6 +10,7 @@ use entities::{Global, ServerState};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
+use std::thread;
 use tide::http::headers::HeaderValue;
 use tide::security::CorsMiddleware;
 use tide::security::Origin;
@@ -23,6 +24,7 @@ macro_rules! init_actors {
     };
 }
 
+// TODO turn those environment variables into command line arguments
 #[async_std::main]
 async fn main() {
     // Initialize the logger
@@ -40,23 +42,56 @@ async fn main() {
     let db_url = std::env::var("DB_URL").unwrap();
     let is_reset_and_seed = std::env::var("RESET_AND_SEED").is_ok();
 
-    if is_reset_and_seed {
-        use sqlx::any::Any;
-        use sqlx::migrate::MigrateDatabase;
-        if Any::database_exists(&db_url).await.unwrap() {
-            Any::drop_database(&db_url).await.unwrap();
+    let limit = 5;
+    let seconds_delay = 5;
+    let retry_delay = std::time::Duration::from_secs(seconds_delay);
+    for try_count in 0..=limit {
+        // Set up the database
+        {
+            use sqlx::any::Any;
+            use sqlx::migrate::MigrateDatabase;
+            if is_reset_and_seed {
+                if let Ok(exists) = Any::database_exists(&db_url).await {
+                    if exists {
+                        Any::drop_database(&db_url).await.unwrap();
+                        Any::create_database(&db_url).await.unwrap();
+                        break;
+                    }
+                } else {
+                    if try_count == limit {
+                        panic!("Failed to connect in {} seconds", limit * seconds_delay);
+                    } else {
+                        thread::sleep(retry_delay);
+                    }
+                }
+            } else {
+                if let Ok(exists) = Any::database_exists(&db_url).await {
+                    if !exists {
+                        Any::create_database(&db_url).await.unwrap();
+                        break;
+                    }
+                } else {
+                    if try_count == limit {
+                        panic!("Failed to connect in {} seconds", limit * seconds_delay);
+                    } else {
+                        thread::sleep(retry_delay);
+                    }
+                }
+            }
         }
-        Any::create_database(&db_url).await.unwrap();
     }
 
-    // Set up the database
     let db_pool_ptr: &'static PgPool = &*Box::leak(Box::new(
-        PgPoolOptions::new().connect(&db_url).await.unwrap(),
+        PgPoolOptions::new()
+            .connect_timeout(std::time::Duration::from_secs(40))
+            .connect(&db_url)
+            .await
+            .unwrap(),
     ));
     let db_pool: &'static PgPool = &*Box::leak(Box::new(db_pool_ptr));
     setup_database(&db_url, db_pool, is_reset_and_seed).await;
 
-    // Initialize the global, read-only, static environment
+    // Initialize the global static environment
     GLOBAL
         .set(&*Box::leak(Box::new(Global { db_pool })))
         .unwrap();
@@ -94,7 +129,8 @@ fn root(children: Children) -> Children {
             // Book routes
             server.at("/book/:title").get(resources::book::get);
 
-            let listen_addr = "127.0.0.1:8080";
+            let listen_addr =
+                std::env::var("APP_LISTEN_ADDR").unwrap_or("127.0.0.1:8080".to_string());
             println!("Web server listening at {}", listen_addr);
             server.listen(listen_addr).await.unwrap();
 
