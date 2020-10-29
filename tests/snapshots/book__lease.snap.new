@@ -1,0 +1,13 @@
+---
+source: tests/book.rs
+expression: read_snapshot(&log_dir)
+---
+LeaseBookByTitlePayload {
+    title: "Rapunzel",
+    lease_length: 86400,
+}
+LeaseBookByTitlePayload {
+    title: "Rapunzel",
+    lease_length: 86400,
+}
+

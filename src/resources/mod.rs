@@ -4,7 +4,10 @@ pub mod book;
 use serde::ser::Serialize;
 use tide::{Body, Response, StatusCode};
 
-pub fn respond_with<P>(content: Option<P>, status: StatusCode) -> tide::Result<Response>
+#[derive(Debug)]
+pub struct ResponseData<T>(StatusCode, Option<T>);
+
+pub fn respond_with<P>(status: StatusCode, content: Option<P>) -> tide::Result<Response>
 where
     P: Serialize,
 {

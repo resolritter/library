@@ -185,6 +185,8 @@ fn root(
             );
 
             server.at("/book/:title").get(resources::book::get);
+            // TODO move this to "/book/:title/lease/:user_id"
+            server.at("/book/:title").patch(resources::book::lease_book);
 
             let server_handle = async_std::task::spawn(server.listen(listen_addr));
             if let Some(signal_file) = signal_file {

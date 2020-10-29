@@ -1,4 +1,4 @@
-use crate::entities::{Book, GetBookByTitlePayload};
+use crate::entities::{Book, GetBookByTitlePayload, LeaseBookByTitlePayload};
 use crate::logging::Loggable;
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
@@ -14,23 +14,26 @@ macro_rules! define_message {
     ($name: ident, $reply:ty, $payload: ty) => {
         #[derive(Debug)]
         pub struct $name {
-            pub reply: crossbeam_channel::Sender<$reply>,
+            pub reply: crossbeam_channel::Sender<Option<crate::resources::ResponseData<$reply>>>,
             pub payload: $payload,
             pub db_pool: &'static sqlx::PgPool,
         }
     };
 }
-define_message!(GetBookByTitleMsg, Option<Book>, GetBookByTitlePayload);
+define_message!(GetBookByTitleMsg, Book, GetBookByTitlePayload);
+define_message!(LeaseBookByTitleMsg, String, LeaseBookByTitlePayload);
 
 #[derive(Debug)]
 pub enum BookMsg {
     GetBookByTitle(GetBookByTitleMsg),
+    LeaseBookByTitle(LeaseBookByTitleMsg),
 }
 
 impl Loggable for BookMsg {
     fn to_log(&self) -> String {
         match self {
             BookMsg::GetBookByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::LeaseBookByTitle(msg) => format!("{:#?}", msg.payload),
         }
     }
 }

@@ -1,0 +1,5 @@
+---
+source: tests/book.rs
+expression: result
+---
+{"data":"This book is not available for borrowing"}
