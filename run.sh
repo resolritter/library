@@ -4,9 +4,11 @@ set -e
 
 root_dir="$(dirname $(realpath "$0"))"
 
+if ! [ "$MEMCACHE_ADDR" ]; then MEMCACHE_ADDR="127.0.0.1"; fi
+if ! [ "$MEMCACHE_PORT" ]; then MEMCACHE_PORT="11211"; fi
 # wrapper for memcached usage in the command line
 # reduced and tweaked extract of https://gist.github.com/goodevilgenius/11375877
-mc_sendmsg() { echo -e "$*\r\nquit\n" | nc 127.0.01 11211; }
+mc_sendmsg() { echo -e "$*\r\nquit\n" | nc $MEMCACHE_ADDR $MEMCACHE_PORT; }
 mc_get() { mc_sendmsg "get $1" | awk "/^VALUE $1/{a=1;next}/^END/{a=0}a" ;}
 mc_doset() {
 	command="$1"
