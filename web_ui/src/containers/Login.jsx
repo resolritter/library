@@ -9,8 +9,8 @@ import {
 import { useSnackbar } from "notistack"
 import { useSelector } from "react-redux"
 
+import { ButtonRow, Column, ColumnTitle } from "src/components/Form"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
-import { ButtonRow, Column, ColumnTitle } from "src/components/SharedForLogin"
 import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
 import { login } from "src/requests/user"
