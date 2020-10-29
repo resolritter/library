@@ -9,13 +9,25 @@ db_vars () {
   export DB_URL="postgresql://localhost:5432/library"
 }
 
+run_server () {
+  db_vars
+  cargo run
+}
+
 case "$1" in
   db)
     db_deps
     docker-compose up db
   ;;
   server)
-    db_vars
-    cargo run
+    run_server
+  ;;
+  *)
+    if [ "$1" ]; then
+      echo "Invalid argument '$1'"
+      exit 1
+    else
+      run_server
+    fi
   ;;
 esac
