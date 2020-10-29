@@ -2,9 +2,9 @@ const path = require("path")
 const fs = require("fs")
 const cp = require("child_process")
 const assert = require("assert").strict
-const sleep = require("sleep")
 const chokidar = require("chokidar")
 const tempy = require("tempy")
+const { adminCredentials } = require("./constants.json")
 
 const testsLockPath = path.join(__dirname, ".tests.lock")
 const executablePath = path.join(__dirname, "../../run.sh")
@@ -57,7 +57,7 @@ const server = cp.spawn(
     "--instance",
     `${serverPort}__${Date.now()}`,
     "--admin-credentials-for-test",
-    "admin@admin.com",
+    adminCredentials,
     "--signal-file",
     serverSignalFile,
     "--port",

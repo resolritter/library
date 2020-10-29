@@ -1,4 +1,5 @@
 import label from "../../../src/labels.json"
+import { adminCredentials } from "../../constants.json"
 import {
   click,
   getUniqueString,
@@ -12,7 +13,7 @@ describe("Borrowing-related tests", () => {
 
     // Log in with the administrator to create a librarian
     click(cy, label.AppBar.Login.id)
-    cy.focused().type("admin@admin.com\n")
+    cy.focused().type(`${adminCredentials}\n`)
     click(cy, label.AppBar.CreateUser.id)
     const librarian = getUniqueEmail()
     cy.focused().type(librarian)
