@@ -1,8 +1,8 @@
 use crate::messages::UserCreationMsg;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
-use entities::{UserCreationPayload, UserPublic};
-use sqlx::postgres::{PgPool, PgRow};
+use entities::{access_level, UserCreationPayload, UserPublic};
+use sqlx::postgres::{PgDone, PgPool, PgRow};
 use sqlx::Row;
 use tide::{Request, StatusCode};
 
@@ -29,8 +29,51 @@ pub async fn check_access_token(
     )
 }
 
+pub async fn create_super_user(
+    email: &str,
+    access_token: &str,
+    db_pool: &PgPool,
+) -> Result<PgDone, sqlx::Error> {
+    Ok(
+        sqlx::query(
+            r#"INSERT INTO "user" (email, access_token, access_level) VALUES ($1, $2, $3)"#,
+        )
+        .bind(email)
+        .bind(access_token)
+        .bind(access_level::ADMIN)
+        .execute(db_pool)
+        .await?,
+    )
+}
+
 #[inline(always)]
 pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<UserPublic>, sqlx::Error> {
+    //                  Anyone can create a simple user
+    let is_authorized = msg.payload.access_level == access_level::USER
+        // Otherwise, check the access level from the token
+        || match &msg.payload.requester_access_token {
+            Some(token) => {
+                let requester_row = sqlx::query(r#"SELECT access_level FROM "user" WHERE access_token=$1"#)
+                    .bind(token)
+                    .fetch_optional(msg.db_pool)
+                    .await?;
+                if let Some(row) = requester_row {
+                    let user_to_be_created_access_level = &msg.payload.access_level;
+                    let requester_access_level = row.try_get::<i32, usize>(0)?;
+                    // Admins can create all kinds of users
+                    (requester_access_level & access_level::ADMIN == 0)
+                    // Users can only create kinds of users which are below in the hierarchy
+                        || user_to_be_created_access_level < &requester_access_level
+                } else {
+                    false
+                }
+            }
+            None => false,
+        };
+    if !is_authorized {
+        return Ok(ResponseData(StatusCode::Forbidden, None));
+    }
+
     let row = sqlx::query(
         r#"INSERT INTO "user" (email, access_level, access_token) VALUES ($1, $2, $3) RETURNING *"#,
     )

@@ -32,7 +32,7 @@ while [[ "$#" -gt 0 ]]; do
     --signal-file) SIGNAL_FILE="$2"; shift ;;
     --dir) export APP_DIR="$2"; shift ;;
     # forwarded arguments
-    --listen) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
+    --listen|--admin-credentials-for-test) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
     --reset-before-run) RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1";;
     # commands
     get_port)

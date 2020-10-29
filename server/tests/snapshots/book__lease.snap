@@ -3,17 +3,18 @@ source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
 UserCreationPayload {
-    email: "user@user.com",
-    access_level: 0,
+    email: "simple@user.com",
+    access_level: 1,
+    requester_access_token: None,
 }
 BookLeaseByTitlePayload {
     title: "Rapunzel",
-    lease_id_req: "user@user.com",
+    lease_id_req: "simple@user.com",
     lease_length: 86400,
 }
 BookLeaseByTitlePayload {
     title: "Rapunzel",
-    lease_id_req: "user@user.com",
+    lease_id_req: "simple@user.com",
     lease_length: 86400,
 }
 

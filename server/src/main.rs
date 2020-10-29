@@ -81,6 +81,14 @@ async fn main() {
                 .about("Resets the database before running the app")
                 .takes_value(false),
         )
+        .arg(
+            Arg::new("admin_credentials_for_test")
+                .long("admin-credentials-for-test")
+                .about(
+                    "Used only for testing runs; before starting the tests, creates an admin user with the supplied ID and access token. Format: ID::token."
+                )
+                .takes_value(true),
+        )
         .get_matches());
 
     // Initialize the logger
@@ -145,7 +153,13 @@ async fn main() {
         .await
         .unwrap(),);
     let db_pool: &'static PgPool = staticfy!(db_pool_ptr);
-    setup_database(&db_url, db_pool, is_resetting_and_seeding).await;
+    setup_database(
+        &db_url,
+        db_pool,
+        is_resetting_and_seeding,
+        cli_args.value_of("admin_credentials_for_test"),
+    )
+    .await;
 
     // Initialize the global static environment
     GLOBAL.set(staticfy!(Global { db_pool })).unwrap();
@@ -222,7 +236,12 @@ fn root(
         })
 }
 
-async fn setup_database(db_url: &str, pool: &PgPool, is_seeding: bool) {
+async fn setup_database(
+    db_url: &str,
+    db_pool: &PgPool,
+    is_seeding: bool,
+    admin_credentials_for_test: Option<&str>,
+) {
     use refinery_core::postgres::{Client, NoTls};
     let mut client = Client::connect(db_url, NoTls).unwrap();
 
@@ -236,6 +255,14 @@ async fn setup_database(db_url: &str, pool: &PgPool, is_seeding: bool) {
     }
 
     if is_seeding {
-        resources::book::seed(pool).await;
+        resources::book::seed(db_pool).await;
+        if let Some(email_and_token) = admin_credentials_for_test {
+            let parts: Vec<&str> = email_and_token.split("::").collect();
+            let email = parts.iter().nth(0).unwrap();
+            let token = parts.iter().nth(1).unwrap();
+            resources::user::create_super_user(*email, *token, db_pool)
+                .await
+                .unwrap();
+        }
     }
 }

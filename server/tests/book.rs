@@ -1,3 +1,4 @@
+use entities::access_level;
 use insta::assert_snapshot;
 use stdext::function_name;
 use surf::StatusCode;
@@ -14,7 +15,7 @@ async fn test_get() {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir);
+    } = &spawn_test_program(&tmp_dir, None);
 
     let mut get = book::get(&server_addr, "Rapunzel").await;
     assert_snapshot!(test_name, get.body_string().await.unwrap());
@@ -32,14 +33,15 @@ async fn test_lease() {
         server_addr,
         log_dir,
         process: _,
-    } = &spawn_test_program(&tmp_dir);
+    } = &spawn_test_program(&tmp_dir, None);
 
     const WHOLE_DAY: i64 = 86400;
     let (_, sample_user) = user::create(
         &server_addr,
         &UserCreationPayload {
-            email: "user@user.com".to_string(),
-            access_level: 0,
+            email: "simple@user.com".to_string(),
+            access_level: access_level::USER,
+            requester_access_token: None,
         },
     )
     .await;
@@ -60,10 +62,10 @@ async fn test_lease() {
         &server_addr,
         Some(&UserPublic {
             email: "DOES_NOT_EXIST".to_string(),
-            access_level: 0,
+            access_level: access_level::USER,
             access_token: "DOES_NOT_MATTER".to_string(),
         }),
-        &sample_user.email,
+        &sample_user.access_token,
         &payload,
     )
     .await

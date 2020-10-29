@@ -3,7 +3,29 @@ source: server/tests/user.rs
 expression: read_snapshot(&log_dir)
 ---
 UserCreationPayload {
-    email: "user@user.com",
-    access_level: 0,
+    email: "librarian@user.com",
+    access_level: 17,
+    requester_access_token: Some(
+        "ADMIN",
+    ),
+}
+UserCreationPayload {
+    email: "simple@user.com",
+    access_level: 1,
+    requester_access_token: None,
+}
+UserCreationPayload {
+    email: "new_ADMIN@user.com",
+    access_level: 273,
+    requester_access_token: Some(
+        "simple@user.com",
+    ),
+}
+UserCreationPayload {
+    email: "new_LIBRARIAN@user.com",
+    access_level: 17,
+    requester_access_token: Some(
+        "simple@user.com",
+    ),
 }
 

@@ -33,7 +33,7 @@ impl Drop for SpawnedTest {
     }
 }
 
-pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
+pub fn spawn_test_program(tmp_dir: &TempDir, admin_access_token: Option<String>) -> SpawnedTest {
     let app_port = get_free_port();
     let app_dir = tmp_dir.path().to_str().unwrap();
     let instance = tmp_dir.path().extension().unwrap().to_str().unwrap();
@@ -49,18 +49,29 @@ pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
         .watch(&signal_file, RecursiveMode::NonRecursive)
         .unwrap();
 
-    let process = Command::new(executable_path())
-        .arg("--listen")
-        .arg(server_addr_arg)
-        .arg("--instance")
-        .arg(instance)
-        .arg("--dir")
-        .arg(app_dir)
-        .arg("--signal-file")
-        .arg(signal_file)
-        .arg("test_server")
-        .spawn()
-        .unwrap();
+    // Workaround for weird lifetime reference on this builder
+    macro_rules! server_builder {
+        () => {
+            Command::new(executable_path())
+                .arg("--listen")
+                .arg(server_addr_arg)
+                .arg("--instance")
+                .arg(instance)
+                .arg("--dir")
+                .arg(app_dir)
+                .arg("--signal-file")
+                .arg(signal_file)
+                .arg("test_server")
+        };
+    }
+    let process = match admin_access_token {
+        Some(token) => server_builder!()
+            .arg("--admin-credentials-for-test")
+            .arg(token)
+            .spawn()
+            .unwrap(),
+        None => server_builder!().spawn().unwrap(),
+    };
 
     let timeout_secs = 10;
     rx.recv_timeout(std::time::Duration::from_secs(timeout_secs))
