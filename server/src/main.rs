@@ -50,7 +50,6 @@ async fn main() {
                 .long("db-url")
                 .about("The connection string for the PostgreSQL database")
                 .takes_value(true)
-                .required(true),
         )
         .arg(
             Arg::new("log_dir")
@@ -111,7 +110,13 @@ async fn main() {
     logging_conf.start().unwrap();
 
     // Initialize the database environment
-    let db_url = cli_args.value_of("db_url").unwrap();
+    let default_db_url = format!(
+        "postgresql://localhost:5432/library?user={}",
+        std::env::var("USER").unwrap()
+    );
+    let db_url = cli_args
+        .value_of("db_url")
+        .unwrap_or(default_db_url.as_str());
     let is_resetting_and_seeding = cli_args.is_present("reset_before_run");
 
     // Wait until the database comes up - especially useful during testing
