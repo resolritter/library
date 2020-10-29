@@ -261,16 +261,13 @@ async fn setup_database(
         );
     }
 
+    if let Some(email) = admin_credentials_for_test {
+        resources::user::create_super_user(email, db_pool)
+            .await
+            .unwrap();
+    }
+
     if is_seeding {
-        if let Some(email_and_token) = admin_credentials_for_test {
-            let parts: Vec<&str> = email_and_token.split("::").collect();
-            let email = parts.get(0).unwrap();
-            let token = parts.get(1).unwrap();
-            resources::user::create_super_user(*email, *token, db_pool)
-                .await
-                .unwrap();
-        } else {
-            resources::book::seed(db_pool).await;
-        }
+        resources::book::seed(db_pool).await;
     }
 }

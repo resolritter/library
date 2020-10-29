@@ -4,7 +4,7 @@ expression: read_snapshot(&log_dir)
 ---
 BookCreatePayload {
     title: "Cinderella",
-    access_token: "admin_access_token",
+    access_token: "admin@admin.com",
 }
 UserCreatePayload {
     email: "simple@user.com",

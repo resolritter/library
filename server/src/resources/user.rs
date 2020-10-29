@@ -122,15 +122,11 @@ endpoint_actor::generate!({ actor: User }, {
     Login: create_session,
 });
 
-pub async fn create_super_user(
-    email: &str,
-    access_token: &str,
-    db_pool: &PgPool,
-) -> Result<PgDone, sqlx::Error> {
+pub async fn create_super_user(email: &str, db_pool: &PgPool) -> Result<PgDone, sqlx::Error> {
     Ok(
         sqlx::query(r#"INSERT INTO "user" (email, access_token, access_mask) VALUES ($1, $2, $3)"#)
             .bind(email)
-            .bind(access_token)
+            .bind(email)
             .bind(access_mask::ADMIN)
             .execute(db_pool)
             .await?,

@@ -4,9 +4,8 @@ use stdext::function_name;
 use surf::StatusCode;
 use tempdir::TempDir;
 use test_utils::{
-    constants::{ADMIN_ACCESS_TOKEN, ADMIN_EMAIL},
-    format::format_test_name,
-    read_snapshot, spawn_test_program, SpawnedTest,
+    constants::ADMIN_ACCESS_TOKEN, format::format_test_name, read_snapshot, spawn_test_program,
+    SpawnedTest,
 };
 
 #[async_std::test]
@@ -19,7 +18,7 @@ async fn test_create_and_get() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+    } = &spawn_test_program(&tmp_dir);
 
     let (_, normal_user) = user::create(
         &server_addr,
@@ -75,7 +74,7 @@ async fn test_borrow() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+    } = &spawn_test_program(&tmp_dir);
 
     const WHOLE_DAY: i64 = 86400;
     let (_, book) = book::create(
@@ -139,7 +138,7 @@ async fn test_end_borrow() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+    } = &spawn_test_program(&tmp_dir);
 
     const WHOLE_DAY: i64 = 86400;
     let (_, book) = book::create(
@@ -233,7 +232,7 @@ async fn test_list() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+    } = &spawn_test_program(&tmp_dir);
 
     let (_, book) = book::create(
         &server_addr,

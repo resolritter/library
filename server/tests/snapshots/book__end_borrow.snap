@@ -4,7 +4,7 @@ expression: read_snapshot(&log_dir)
 ---
 BookCreatePayload {
     title: "Cinderella",
-    access_token: "admin_access_token",
+    access_token: "admin@admin.com",
 }
 UserCreatePayload {
     email: "first@user.com",
@@ -38,7 +38,7 @@ UserCreatePayload {
     email: "librarian@user.com",
     access_mask: 17,
     requester_access_token: Some(
-        "admin_access_token",
+        "admin@admin.com",
     ),
 }
 BookEndBorrowByTitlePayload {

@@ -6,13 +6,7 @@ pub fn format_test_name(raw: &str) -> String {
     };
     let filtered_name = prunned_name
         .iter()
-        .map(|c| {
-            if *c == ':' as u8 {
-                '_' as u8
-            } else {
-                c.to_owned()
-            }
-        })
+        .map(|c| if *c == b':' { b'_' } else { c.to_owned() })
         .collect::<Vec<u8>>();
     let sliced = filtered_name.as_slice();
     String::from_utf8_lossy(sliced).to_string()

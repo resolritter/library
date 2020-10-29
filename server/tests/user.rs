@@ -4,9 +4,8 @@ use stdext::function_name;
 use surf::StatusCode;
 use tempdir::TempDir;
 use test_utils::{
-    constants::{ADMIN_ACCESS_TOKEN, ADMIN_EMAIL},
-    format::format_test_name,
-    read_snapshot, spawn_test_program, SpawnedTest,
+    constants::ADMIN_ACCESS_TOKEN, format::format_test_name, read_snapshot, spawn_test_program,
+    SpawnedTest,
 };
 
 #[async_std::test]
@@ -19,7 +18,7 @@ async fn test_create_user_and_login() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, None);
+    } = &spawn_test_program(&tmp_dir);
 
     // Fail a login with a user which does _not_ exist
     let bad_request_nonexistent_user = user::do_login(
@@ -65,7 +64,7 @@ async fn test_create_user() {
         server_addr,
         log_dir,
         ..
-    } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
+    } = &spawn_test_program(&tmp_dir);
 
     user::create(
         &server_addr,

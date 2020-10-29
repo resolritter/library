@@ -50,10 +50,9 @@ while [[ "$#" -gt 0 ]]; do
     # options
     --db-port) export APP_DB_PORT=$2; shift ;;
     --instance) export APP_INSTANCE="$2"; shift ;;
-    --signal-file) SIGNAL_FILE="$2"; shift ;;
     --dir) export APP_DIR="$2"; shift ;;
     # forwarded arguments
-    --listen|--admin-credentials-for-test) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
+    --listen|--admin-credentials-for-test|--signal-file) export RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1=$2"; shift;;
     --reset-before-run) RUN_SERVER_EXTRA="$RUN_SERVER_EXTRA $1";;
     # commands
     get_port)
@@ -114,12 +113,7 @@ case "$CMD" in
     docker-compose up --force-recreate --renew-anon-volumes db
   ;;
   test_server)
-    if ! [ "$SIGNAL_FILE" ]; then
-      echo "Signal file should be specified before running the test."
-      exit 1
-    fi
-
-    RUN_SERVER_EXTRA="--reset-before-run --log-dir="$LOG_DIR" --log-format="test" --signal-file="$SIGNAL_FILE" $RUN_SERVER_EXTRA"
+    RUN_SERVER_EXTRA="--log-dir="$LOG_DIR" --log-format="test" $RUN_SERVER_EXTRA"
     run_server
   ;;
   db)
