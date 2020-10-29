@@ -62,3 +62,22 @@ export const endBookBorrow = async function (
     return await handleErrorResponse(response)
   }
 }
+
+export const createBook = async function ({ access_token }, { title }) {
+  const response = await fetch(apiEndpoints.createBook(), {
+    method: "POST",
+    mode: getCors(),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Auth": access_token,
+    },
+    body: JSON.stringify({
+      title,
+      access_token,
+    }),
+  })
+
+  if (response.status !== StatusCodes.CREATED) {
+    return await handleErrorResponse(response)
+  }
+}

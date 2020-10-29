@@ -23,6 +23,9 @@ export const apiEndpoints = {
   createUser: function () {
     return `${apiURL}/user`
   },
+  createBook: function () {
+    return `${apiURL}/book`
+  },
   borrowBook: function ({ title }) {
     return `${apiURL}/book/${title}/borrow`
   },
@@ -43,5 +46,8 @@ export const routes = {
   },
   createUser: function () {
     return "/create_user"
+  },
+  createBook: function () {
+    return "/create_book"
   },
 }

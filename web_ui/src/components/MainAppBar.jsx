@@ -8,9 +8,10 @@ import { useDispatch, useSelector } from "react-redux"
 import { routes, userAPIAccessLevels } from "src/constants"
 import { history } from "src/setup"
 import userStore from "src/store/user"
+import { flexCenteredRow } from "src/styles"
 
-export const ButtonGap = function () {
-  return <Box width="1rem" />
+export const ButtonGap = function ({ separator = "" }) {
+  return <Box width="1rem">{separator}</Box>
 }
 
 export const MainAppBar = function () {
@@ -22,7 +23,7 @@ export const MainAppBar = function () {
   return (
     <AppBar position="static">
       <Toolbar variant="dense">
-        <Box>
+        <Box {...flexCenteredRow}>
           <Button
             onClick={function () {
               history.push(routes.home())
@@ -31,6 +32,23 @@ export const MainAppBar = function () {
           >
             Books
           </Button>
+          {user &&
+            (user.access_mask & userAPIAccessLevels.librarian) ===
+              userAPIAccessLevels.librarian && (
+              <>
+                <ButtonGap />
+                <ButtonGap separator={"•"} />
+                <ButtonGap />
+                <Button
+                  onClick={function () {
+                    history.push(routes.createBook())
+                  }}
+                  color="inherit"
+                >
+                  Create Book
+                </Button>
+              </>
+            )}
         </Box>
         <Box
           display="flex"

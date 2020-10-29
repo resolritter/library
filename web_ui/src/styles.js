@@ -7,3 +7,7 @@ export const flexCenteredColumn = {
   ...flexCentered,
   flexDirection: "column",
 }
+export const flexCenteredRow = {
+  ...flexCentered,
+  flexDirection: "row",
+}
