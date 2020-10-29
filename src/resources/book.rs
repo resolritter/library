@@ -1,4 +1,4 @@
-use crate::entities::{Book, BookGet, BookGetMessage, Static};
+use crate::entities::{Book, BookGet, BookGetMessage, ServerState};
 use crate::messages::ActorGroups;
 use crate::resources::respond_with;
 use bastion::prelude::*;
@@ -20,7 +20,7 @@ pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Option<Book> {
     })
 }
 
-pub async fn get(mut req: Request<Static>) -> tide::Result<Response> {
+pub async fn get(mut req: Request<ServerState>) -> tide::Result<Response> {
   let payload: BookGet = req.body_json().await?;
   respond_with(
     {

@@ -15,7 +15,7 @@ impl std::fmt::Debug for App {
 }
 
 #[derive(Clone)]
-pub struct Static {
+pub struct ServerState {
   pub app: &'static App,
 }
 

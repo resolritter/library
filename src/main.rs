@@ -4,7 +4,7 @@ mod resources;
 
 use crate::messages::ActorGroups;
 use bastion::prelude::*;
-use entities::{App, Static};
+use entities::{App, ServerState};
 use once_cell::sync::OnceCell;
 use sqlx::postgres::PgPoolOptions;
 
@@ -32,7 +32,11 @@ static BASTION: OnceCell<BastionContext> = OnceCell::new();
 fn root(children: Children) -> Children {
   children.with_name(ActorGroups::Input.as_ref()).with_exec(
     move |bastion: BastionContext| async move {
-      BASTION.set(bastion).unwrap();
+      // if the supervisor has to restart for some reason, put the new instance behind the cell
+      if let Err(bastion) = BASTION.set(bastion) {
+        BASTION.take();
+        BASTION.set(bastion).unwrap();
+      }
 
       let db_pool = PgPoolOptions::new()
         .connect(&env::var("DATABASE_URL").unwrap())
@@ -44,7 +48,7 @@ fn root(children: Children) -> Children {
           bastion: BASTION.get().unwrap(),
         })
         .unwrap();
-      let mut server = Server::with_state(Static {
+      let mut server = Server::with_state(ServerState {
         app: APP.get().unwrap(),
       });
 
