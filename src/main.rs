@@ -32,7 +32,13 @@ async fn main() {
         .arg(
             Arg::new("log_format")
                 .long("log-format")
-                .about("[test]")
+                .about("{test}")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("signal_file")
+                .long("signal-file")
+                .about("Specify a path to be written to when the program initializes fully.")
                 .takes_value(true),
         )
         .arg(
@@ -122,6 +128,9 @@ async fn main() {
         .and_then(|_| Bastion::supervisor(|sup| sup.children(root)))
         .unwrap();
     Bastion::start();
+    if let Some(signal_file) = cli_args.value_of("signal_file") {
+        std::fs::write(signal_file, "READY").unwrap();
+    };
     Bastion::block_until_stopped();
 }
 
@@ -143,7 +152,6 @@ fn root(children: Children) -> Children {
                     .allow_origin(Origin::Any),
             );
 
-            // Book routes
             server.at("/book/:title").get(resources::book::get);
 
             let listen_addr =

@@ -6,6 +6,7 @@ while [[ "$#" -gt 0 ]]; do
   case $1 in
     --db-port) export APP_DB_PORT=$2; shift ;;
     --instance) export APP_INSTANCE="$2"; shift ;;
+    --signal-file) SIGNAL_FILE="$2"; shift ;;
     --dir) export APP_DIR="$2"; shift ;;
     --listen) export APP_LISTEN_ADDR="$2"; shift ;;
     test|test_server|server|db|test_db) CMD="$1";;
@@ -22,7 +23,7 @@ if ! [ "$APP_LOG_DIR" ]; then export APP_LOG_DIR="$APP_DIR/log"; fi
 if ! [ "$APP_DB_DIR" ]; then export APP_DB_DIR="$APP_DIR/db"; fi
 if ! [ "$APP_LISTEN_ADDR" ]; then export APP_LISTEN_ADDR="127.0.0.1:8080"; fi
 if ! [ "$APP_DB_PORT" ]; then
-  if [ "$CMD" = "test" ]; then
+  if [ "$CMD" = "test_server" ]; then
     export APP_DB_PORT=$(cat "$TEST_DB_PORT_FILE")
   fi
   if ! [ "$APP_DB_PORT" ]; then
@@ -35,7 +36,6 @@ mkdir -m 777 -p "$APP_DIR"
 export DB_URL="postgresql://localhost:$APP_DB_PORT/$APP_INSTANCE?user=$USER"
 
 logging_deps () {
-  export APP_LOG_DIR="$APP_DIR/log"
   mkdir -m 777 -p "$APP_LOG_DIR"
 }
 
@@ -60,9 +60,6 @@ get_available_port () {
 }
 
 case "$CMD" in
-  test)
-    cargo test
-  ;;
   test_db)
     export APP_DB_PORT="$(get_available_port)"
     echo "$APP_DB_PORT" > "$TEST_DB_PORT_FILE"
@@ -70,7 +67,12 @@ case "$CMD" in
   ;;
   test_server)
     logging_deps
-    cargo run -- --reset-before-run --log-format="test"
+    if ! [ "$SIGNAL_FILE" ]; then
+      echo "Signal file should be specified before running the test."
+      exit 1
+    fi
+
+    cargo run -- --reset-before-run --log-format="test" --signal-file="$SIGNAL_FILE"
   ;;
   db)
     db_deps
