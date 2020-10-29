@@ -146,18 +146,27 @@ async fn main() {
     // Initialize the supervision tree
     let listen_addr: &'static str =
         staticfy!(cli_args.value_of("listen").unwrap_or("127.0.0.1:8080"),);
+    let signal_file: Option<&'static str> =
+        if let Some(signal_file_arg) = cli_args.value_of("signal_file") {
+            Some(staticfy!(signal_file_arg))
+        } else {
+            None
+        };
     Bastion::init();
     Bastion::supervisor(|sup| sup.children(resources::book::actor))
-        .and_then(|_| Bastion::supervisor(|sup| sup.children(|child| root(child, listen_addr))))
+        .and_then(|_| {
+            Bastion::supervisor(|sup| sup.children(|child| root(child, listen_addr, signal_file)))
+        })
         .unwrap();
     Bastion::start();
-    if let Some(signal_file) = cli_args.value_of("signal_file") {
-        std::fs::write(signal_file, "READY").unwrap();
-    };
     Bastion::block_until_stopped();
 }
 
-fn root(children: Children, listen_addr: &'static str) -> Children {
+fn root(
+    children: Children,
+    listen_addr: &'static str,
+    signal_file: Option<&'static str>,
+) -> Children {
     children
         .with_name(ActorGroups::Input.as_ref())
         .with_exec(move |_| async move {
@@ -177,8 +186,12 @@ fn root(children: Children, listen_addr: &'static str) -> Children {
 
             server.at("/book/:title").get(resources::book::get);
 
+            let server_handle = async_std::task::spawn(server.listen(listen_addr));
+            if let Some(signal_file) = signal_file {
+                std::fs::write(signal_file, "READY").unwrap();
+            }
             println!("Web server listening at {}", listen_addr);
-            server.listen(listen_addr).await.unwrap();
+            server_handle.await.unwrap();
 
             Ok(())
         })
