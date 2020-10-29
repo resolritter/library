@@ -14,8 +14,9 @@ import {
 import { useSnackbar } from "notistack"
 import { useSelector } from "react-redux"
 
-import { borrowBook, loadBooks } from "src/requests/book"
-import { loadingStates } from "src/utils"
+import { userAPIAccessLevels } from "src/constants"
+import { borrowBook, endBookBorrow, loadBooks } from "src/requests/book"
+import { handleWithSnackbar, loadingStates } from "src/utils"
 
 const TableHeaderCell = withStyles({
   root: {
@@ -34,6 +35,12 @@ export function Home() {
   const books = useSelector(function ({ book: { items } }) {
     return items
   })
+  const errorToSnackbar = React.useMemo(
+    function () {
+      return handleWithSnackbar(enqueueSnackbar)
+    },
+    [enqueueSnackbar],
+  )
 
   const reloadBooks = React.useCallback(
     function () {
@@ -104,26 +111,36 @@ export function Home() {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={async function () {
-                        borrowBook({ title, email: user.email })
-                          .then(function (result) {
-                            if (result instanceof Error) {
-                              enqueueSnackbar(result.message, {
-                                variant: "error",
-                              })
-                            } else {
-                              reloadBooks()
-                            }
-                          })
-                          .catch(function (err) {
-                            enqueueSnackbar(err.message, {
-                              variant: "error",
-                            })
-                          })
+                      onClick={function () {
+                        errorToSnackbar(
+                          borrowBook(user, { title }),
+                          reloadBooks,
+                        )
                       }}
                       style={{ opacity: user && canBeBorrowed ? 1 : 0 }}
                     >
                       Borrow
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={function () {
+                        errorToSnackbar(
+                          endBookBorrow(user, { title }),
+                          reloadBooks,
+                        )
+                      }}
+                      style={{
+                        opacity:
+                          user &&
+                          !canBeBorrowed &&
+                          (userAPIAccessLevels.librarian & user.access_mask) ==
+                            userAPIAccessLevels.librarian
+                            ? 1
+                            : 0,
+                      }}
+                    >
+                      Cancel Borrow
                     </Button>
                   </TableCell>
                 </TableRow>

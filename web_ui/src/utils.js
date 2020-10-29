@@ -2,6 +2,26 @@ import { zipObject } from "lodash-es"
 
 const cssVariablePrefix = "--"
 
+export const handleWithSnackbar = function (enqueueSnackbar) {
+  return function (prom, continuation) {
+    prom
+      .then(function (result) {
+        if (result instanceof Error) {
+          enqueueSnackbar(result.message, {
+            variant: "error",
+          })
+        } else {
+          continuation()
+        }
+      })
+      .catch(function (err) {
+        enqueueSnackbar(err.message, {
+          variant: "error",
+        })
+      })
+  }
+}
+
 export const newCssVariableName = function (name) {
   return `${cssVariablePrefix}${name}`
 }

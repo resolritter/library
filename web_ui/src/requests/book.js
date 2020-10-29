@@ -19,20 +19,41 @@ export const loadBooks = async function () {
   }
 }
 
-export const borrowBook = async function ({ title, email }) {
+export const borrowBook = async function ({ access_token, email }, { title }) {
+  const response = await fetch(apiEndpoints.borrowBook({ title }), {
+    method: "POST",
+    mode: getCors(),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Auth": access_token,
+    },
+    body: JSON.stringify({
+      title,
+      borrow_id: email,
+      borrow_length: week,
+    }),
+  })
+
+  if (response.status !== StatusCodes.OK) {
+    return await handleErrorResponse(response)
+  }
+}
+
+export const endBookBorrow = async function (
+  { email, access_token },
+  { title },
+) {
   const response = await fetch(
     apiEndpoints.borrowBook({ title, borrowId: email }),
     {
-      method: "POST",
+      method: "DELETE",
       mode: getCors(),
       headers: {
         "Content-Type": "application/json",
-        "X-Auth": email,
+        "X-Auth": access_token,
       },
       body: JSON.stringify({
         title,
-        borrow_id: email,
-        borrow_length: week,
       }),
     },
   )
