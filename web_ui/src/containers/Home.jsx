@@ -26,8 +26,6 @@ const TableHeaderCell = withStyles({
   },
 })(TableCell)
 
-const BorrowButton = function () {}
-
 export function Home() {
   const { enqueueSnackbar } = useSnackbar()
   const hasLoaded = React.useRef(loadingStates.notStarted)
@@ -139,7 +137,6 @@ export function Home() {
                 ? [cancelBorrowButton, borrowButton]
                 : [borrowButton, cancelBorrowButton]
 
-              const sumPxNonTitleColumns = 580
               return (
                 <TableRow hover key={i}>
                   <TableCell>{title}</TableCell>
