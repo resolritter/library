@@ -50,6 +50,21 @@ export const MainAppBar = function () {
                 </Button>
               </>
             )}
+          {(!user || user.access_mask === userAPIAccessLevels.admin) && (
+            <>
+              <ButtonGap />
+              <ButtonGap separator={"•"} />
+              <ButtonGap />
+              <Button
+                onClick={function () {
+                  history.push(routes.createUser())
+                }}
+                color="inherit"
+              >
+                Create User
+              </Button>
+            </>
+          )}
         </Box>
         <Box
           display="flex"
@@ -81,20 +96,6 @@ export const MainAppBar = function () {
                 variant="contained"
               >
                 LOGOUT
-              </Button>
-            </>
-          )}
-          {(!user || user.access_mask === userAPIAccessLevels.admin) && (
-            <>
-              <ButtonGap />
-              <Button
-                onClick={function () {
-                  history.push(routes.createUser())
-                }}
-                variant="contained"
-                color="primary"
-              >
-                Create user
               </Button>
             </>
           )}
