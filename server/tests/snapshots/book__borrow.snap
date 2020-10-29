@@ -13,11 +13,11 @@ UserCreatePayload {
 }
 BookBorrowByTitlePayload {
     title: "Cinderella",
-    borrow_length: 86400,
     borrow_id: "simple@user.com",
+    borrow_length: 86400,
 }
 BookBorrowByTitlePayload {
     title: "Cinderella",
-    borrow_length: 86400,
     borrow_id: "simple@user.com",
+    borrow_length: 86400,
 }

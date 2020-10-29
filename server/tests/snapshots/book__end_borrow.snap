@@ -18,8 +18,8 @@ UserCreatePayload {
 }
 BookBorrowByTitlePayload {
     title: "Cinderella",
-    borrow_length: 86400,
     borrow_id: "first@user.com",
+    borrow_length: 86400,
 }
 BookEndBorrowByTitlePayload {
     title: "Cinderella",
@@ -31,8 +31,8 @@ BookEndBorrowByTitlePayload {
 }
 BookBorrowByTitlePayload {
     title: "Cinderella",
-    borrow_length: 86400,
     borrow_id: "second@user.com",
+    borrow_length: 86400,
 }
 UserCreatePayload {
     email: "librarian@user.com",

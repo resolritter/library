@@ -9,29 +9,50 @@ pub mod access_mask {
     pub const ADMIN: i32 = 0x111;
 }
 
-type BorrowBookId = String;
 type BookBorrowLength = i64;
+type BookTitle = String;
+type UserEmail = String;
 
-structout::generate!(
-    #[derive(Serialize, Deserialize, Debug)]
-    pub {
-        pub title: String,
-        pub borrow_id: Option<BorrowBookId>,
-        pub borrow_until: Option<BookBorrowLength>,
-        pub borrow_length: BookBorrowLength,
-    } => {
-        Book => [omit(borrow_length)],
-        // 'borrow_id' refers to the current borrower of the book;
-        // of course, it should be hidden for the general public
-        BookPublic => [omit(borrow_id, borrow_length)],
-        BookGetByTitlePayload => [include(title)],
-        BookBorrowByTitleRequestBody => [include(borrow_length), upsert(pub borrow_id: BorrowBookId)],
-        BookEndBorrowByTitlePayload => [include(title), upsert(pub access_token: String)],
-        BookCreatePayloadRequestBody => [include(title)],
-        BookCreatePayload => [include(title), upsert(pub access_token: String)],
-        BookBorrowByTitlePayload => [include(title, borrow_length), upsert(pub borrow_id: BorrowBookId)]
-    }
-);
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Book {
+    pub title: String,
+    pub borrow_id: Option<UserEmail>,
+    pub borrow_until: Option<BookBorrowLength>
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BookPublic {
+    pub title: String,
+    pub borrow_until: Option<BookBorrowLength>,
+}
+#[derive(Deserialize, Debug)]
+pub struct BookGetByTitlePayload {
+    pub title: BookTitle,
+}
+#[derive(Deserialize, Debug)]
+pub struct BookBorrowByTitleRequestBody {
+    pub borrow_length: BookBorrowLength,
+    pub borrow_id: String,
+}
+#[derive(Serialize, Debug)]
+pub struct BookEndBorrowByTitlePayload {
+    pub title: BookTitle,
+    pub access_token: String,
+}
+#[derive(Deserialize, Debug)]
+pub struct BookCreatePayloadRequestBody {
+    pub title: BookTitle,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BookCreatePayload {
+    pub title: BookTitle,
+    pub access_token: String,
+}
+#[derive(Serialize, Debug)]
+pub struct BookBorrowByTitlePayload {
+    pub title: BookTitle,
+    pub borrow_id: String,
+    pub borrow_length: BookBorrowLength,
+}
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BookPublicListPayload {
     pub query: Option<String>,
@@ -42,19 +63,22 @@ pub struct BookOkResponse {
     pub Ok: Book,
 }
 
-structout::generate!(
-    #[derive(Serialize, Deserialize, Debug)]
-    pub {
-        pub email: BorrowBookId,
-        pub access_mask: i32,
-        pub access_token: String,
-    } => {
-        User => [],
-        UserCreatePayload => [omit(access_token), upsert(pub requester_access_token: Option<String>)],
-        // FIXME auth should support password as well
-        UserLoginPayload => [include(email)],
-    }
-);
+#[derive(Serialize, Deserialize, Debug)]
+pub struct User {
+    pub email: String,
+    pub access_mask: i32,
+    pub access_token: String,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserCreatePayload {
+    pub email: String,
+    pub access_mask: i32,
+    pub requester_access_token: Option<String>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserLoginPayload {
+    pub email: String,
+}
 #[derive(Deserialize)]
 #[allow(non_snake_case)]
 pub struct UserOkResponse {
