@@ -26,7 +26,7 @@ strum = "0.19"
 strum_macros = "0.19"
 structout = { path = "../structout" }
 endpoint_actor = { path = "./macros/endpoint_actor" }
-respond_with_actor = { path = "./macros/respond_with_actor" }
+actor_response_handler = { path = "./macros/actor_response_handler" }
 
 [dev-dependencies]
 surf = "2.0"

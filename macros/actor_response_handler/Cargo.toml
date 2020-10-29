@@ -1,5 +1,5 @@
 [package]
-name = "respond_with_actor"
+name = "actor_response_handler"
 version = "0.1.0"
 authors = ["resolritter <resolritter@users.noreply.github.com>"]
 edition = "2018"

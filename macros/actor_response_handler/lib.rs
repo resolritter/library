@@ -12,6 +12,7 @@ use syn::{
     token, Ident, Result, Token, Type,
 };
 
+#[allow(clippy::large_enum_variant)]
 enum Definition {
     Actor(Ident),
     ResponseType(Type),
@@ -98,8 +99,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
     let tag_msg = Ident::new(&tag_msg_str, Span::call_site());
 
     (quote! {
-    pub async fn #name(req: Request<ServerState>) -> tide::Result<Response> {
-        let (reply, r) = crossbeam_channel::bounded::<Option<#response_type>>(1);
+    pub async fn #name(mut req: Request<ServerState>) -> tide::Result<Response> {
+        #[allow(clippy::unnecessary_mut_passed)]
+        let payload = #parser(&mut req).await?;
+        let (reply, r) = crossbeam_channel::bounded::<Option<crate::resources::ResponseData<#response_type>>>(1);
         let state = req.state();
         
         #actor_lock
@@ -108,20 +111,17 @@ pub fn generate(input: TokenStream) -> TokenStream {
             .read()
             .as_ref()
             .unwrap()
-            .send(#tag(#tag_msg { reply, db_pool: state.global.db_pool, payload: #parser(&req) }))
+            .send(#tag(#tag_msg { reply, db_pool: state.global.db_pool, payload }))
             .unwrap();
 
         crossbeam_channel::select! {
           recv(r) -> msg => {
             match msg {
-              Ok(item) => match item {
-                Some(item) => crate::resources::respond_with::<#response_type>(Some(item), tide::StatusCode::Ok),
-                None => crate::resources::respond_with::<#response_type>(None, tide::StatusCode::NotFound),
-              },
-              _ => crate::resources::respond_with::<#response_type>(None, tide::StatusCode::InternalServerError)
+              Ok(Some(crate::resources::ResponseData(code, content))) => crate::resources::respond_with::<#response_type>(code, content),
+              _ => crate::resources::respond_with::<#response_type>(tide::StatusCode::InternalServerError, None)
             }
           },
-          default(std::time::Duration::from_secs(3)) => crate::resources::respond_with::<#response_type>(None, tide::StatusCode::RequestTimeout),
+          default(std::time::Duration::from_secs(3)) => crate::resources::respond_with::<#response_type>(tide::StatusCode::RequestTimeout, None),
         }
     }
     })
