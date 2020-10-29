@@ -1,29 +1,22 @@
 import * as React from "react"
 import { Route, Switch } from "react-router"
-import ChangeThemeButton from "src/components/ChangeThemeButton"
-import LocalIncrementButton from "src/components/LocalIncrementButton"
-import StoreIncrementButton from "src/components/StoreIncrementButton"
-
-export const App = function () {
-  return (
-    <div>
-      <ChangeThemeButton />
-      <LocalIncrementButton />
-      <StoreIncrementButton />
-    </div>
-  )
-}
+import Login from "src/containers/Login"
+import FullPageLayout from "src/containers/FullPageLayout"
+import MainAppBar from "src/components/MainAppBar"
 
 export const ConnectedApp = function () {
   return (
-    <Switch>
-      <Route exact path="/" component={App} />
-      <Route
-        component={function NotFound() {
-          return <div>404</div>
-        }}
-      />
-    </Switch>
+    <FullPageLayout>
+      <MainAppBar />
+      <Switch>
+        <Route exact path="/login" component={Login} />
+        <Route
+          component={function NotFound() {
+            return <div>404</div>
+          }}
+        />
+      </Switch>
+    </FullPageLayout>
   )
 }
 
