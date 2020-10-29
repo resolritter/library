@@ -49,7 +49,12 @@ export const createUser = async function ({
 
   if (response.status === StatusCodes.CREATED) {
     if (shouldSetAsCurrent) {
-      store.dispatch(userStore.actions.setUser(await response.json()))
+      const user = (await response.json()).Ok
+      if (user) {
+        store.dispatch(userStore.actions.setUser(user))
+      } else {
+        return new Error("Unexpected response")
+      }
     }
   } else {
     return await handleErrorResponse(response)
