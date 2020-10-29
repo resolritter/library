@@ -33,6 +33,22 @@ export function CreateUser() {
     [enqueueSnackbar],
   )
   const shouldSetAsCurrent = !user
+  const isAuthorized =
+    !user ||
+    (user &&
+      (user.access_mask & userAPIAccessLevels.admin) ===
+        userAPIAccessLevels.admin)
+  React.useLayoutEffect(
+    function () {
+      if (!isAuthorized) {
+        history.push(routes.home())
+      }
+    },
+    [isAuthorized],
+  )
+  if (!isAuthorized) {
+    return null
+  }
 
   return (
     <FullContentSpaceLayoutCentered>
