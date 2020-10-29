@@ -9,7 +9,7 @@ pub fn do_borrow(
 ) -> RequestBuilder {
     surf::post(format!(
         concat!(server_root!(), book_route!(), lease_route!()),
-        server_addr, payload.title, payload.lease_id_req
+        server_addr, payload.title, payload.lease_id
     ))
     .body(serde_json::json!(payload).to_string())
     .header("X-Auth", access_token)
@@ -28,7 +28,7 @@ pub async fn borrow(
 pub fn do_end_loan(server_addr: &str, payload: &BookEndLoanByTitlePayload) -> RequestBuilder {
     surf::patch(format!(
         concat!(server_root!(), book_route!(), end_loan_route!()),
-        server_addr, payload.title, payload.lease_id_req
+        server_addr, payload.title, payload.lease_id
     ))
     .body(serde_json::json!(payload).to_string())
     .header("X-Auth", payload.access_token.clone())

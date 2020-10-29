@@ -47,7 +47,7 @@ async fn test_lease() {
     .await;
     let payload = BookLeaseByTitlePayload {
         title: "Rapunzel".to_string(),
-        lease_id_req: first_user.email.clone(),
+        lease_id: first_user.email.clone(),
         lease_length: WHOLE_DAY,
     };
 
@@ -116,7 +116,7 @@ async fn test_end_loan() {
     .await;
     let mut borrow_payload = BookLeaseByTitlePayload {
         title: "Rapunzel".to_string(),
-        lease_id_req: first_user.email.clone(),
+        lease_id: first_user.email.clone(),
         lease_length: WHOLE_DAY,
     };
 
@@ -126,7 +126,7 @@ async fn test_end_loan() {
     // The second user won't be able to end the loan on behalf of the first
     let mut end_loan_payload = BookEndLoanByTitlePayload {
         title: borrow_payload.title.clone(),
-        lease_id_req: borrow_payload.lease_id_req.clone(),
+        lease_id: borrow_payload.lease_id.clone(),
         access_token: second_user.access_token.to_string(),
     };
     let bad_forbidden_end_loan = book::do_end_loan(&server_addr, &end_loan_payload)
@@ -143,7 +143,7 @@ async fn test_end_loan() {
 
     // Now the book is free and the second user will be able to borrow it
     borrow_payload = BookLeaseByTitlePayload {
-        lease_id_req: second_user.email.clone(),
+        lease_id: second_user.email.clone(),
         ..borrow_payload
     };
     book::borrow(&server_addr, &second_user.access_token, &borrow_payload).await;
@@ -162,7 +162,7 @@ async fn test_end_loan() {
         &server_addr,
         &BookEndLoanByTitlePayload {
             title: borrow_payload.title.clone(),
-            lease_id_req: borrow_payload.lease_id_req.clone(),
+            lease_id: borrow_payload.lease_id.clone(),
             access_token: librarian_user.access_token.to_string(),
         },
     )

@@ -9,12 +9,12 @@ UserCreationPayload {
 }
 BookLeaseByTitlePayload {
     title: "Rapunzel",
-    lease_id_req: "simple@user.com",
     lease_length: 86400,
+    lease_id: "simple@user.com",
 }
 BookLeaseByTitlePayload {
     title: "Rapunzel",
-    lease_id_req: "simple@user.com",
     lease_length: 86400,
+    lease_id: "simple@user.com",
 }
 

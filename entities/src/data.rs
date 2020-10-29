@@ -12,32 +12,30 @@ pub mod access_mask {
 type LeaseBookId = String;
 
 structout::generate!(
-    pub <> {
+    #[derive(Serialize, Deserialize, Debug)]
+    pub {
         pub id: i32,
         pub title: String,
         pub lease_id: Option<LeaseBookId>,
-        pub lease_id_req: LeaseBookId,
         pub lease_until: Option<i64>,
         pub lease_length: i64,
-        pub access_token: String,
     } => {
-        Book => [attr(#[derive(Serialize, Debug)]), omit(lease_length), omit(lease_id_req), omit(access_token)],
-        BookSeed => [include(title)],
-        BookGetByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title)],
-        BookLeaseByTitleRequestBody => [attr(#[derive(Deserialize, Debug)]), include(lease_length), include(lease_id_req)],
-        BookEndLoanByTitlePayload => [attr(#[derive(Serialize, Deserialize, Debug)]), include(title), include(lease_id_req), include(access_token)],
-        BookLeaseByTitlePayload => [attr(#[derive(Serialize, Debug)]), include(title), include(lease_id_req), include(lease_length)]
+        Book => [omit(lease_length)],
+        BookGetByTitlePayload => [include(title)],
+        BookLeaseByTitleRequestBody => [include(lease_length), upsert(pub lease_id: LeaseBookId)],
+        BookEndLoanByTitlePayload => [include(title), upsert(pub lease_id: LeaseBookId, pub access_token: String)],
+        BookLeaseByTitlePayload => [include(title, lease_length), upsert(pub lease_id: LeaseBookId)]
     }
 );
 
 structout::generate!(
-    pub <> {
+    #[derive(Serialize, Deserialize, Debug)]
+    pub {
         pub email: LeaseBookId,
         pub access_mask: i32,
         pub access_token: String,
-        pub requester_access_token: Option<String>,
     } => {
-        UserPublic => [attr(#[derive(Serialize, Deserialize, Debug)]), omit(requester_access_token)],
-        UserCreationPayload => [attr(#[derive(Serialize, Deserialize, Debug)]), omit(access_token)],
+        UserPublic => [],
+        UserCreationPayload => [omit(access_token), upsert(pub requester_access_token: Option<String>)],
     }
 );

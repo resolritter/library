@@ -4,7 +4,7 @@ use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
     access_mask, Book, BookEndLoanByTitlePayload, BookGetByTitlePayload, BookLeaseByTitlePayload,
-    BookLeaseByTitleRequestBody, BookSeed,
+    BookLeaseByTitleRequestBody,
 };
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
@@ -67,7 +67,7 @@ async fn extract_end_loan(
 ) -> tide::Result<BookEndLoanByTitlePayload> {
     Ok(BookEndLoanByTitlePayload {
         title: req.param("title")?,
-        lease_id_req: req.param("lease_id")?,
+        lease_id: req.param("lease_id")?,
         access_token: req.header("X-Auth").unwrap().get(0).unwrap().to_string(),
     })
 }
@@ -123,7 +123,7 @@ pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<Strin
     }
 
     let lease_length = &msg.payload.lease_length;
-    let lease_id = &msg.payload.lease_id_req;
+    let lease_id = &msg.payload.lease_id;
     let try_lease = sqlx::query(
         "UPDATE book SET lease_until=$1,lease_id=$2 WHERE title=$3 AND lease_until IS NULL OR lease_until < $4",
     )
@@ -152,7 +152,7 @@ async fn extract_lease_book(
     Ok(BookLeaseByTitlePayload {
         title: req.param("title")?,
         lease_length: body.lease_length,
-        lease_id_req: req.param("lease_id")?,
+        lease_id: req.param("lease_id")?,
     })
 }
 actor_response_handler::generate!(Config {
@@ -169,25 +169,8 @@ endpoint_actor::generate!({ actor: Book }, {
 });
 
 pub async fn seed(pool: &PgPool) -> Vec<Book> {
-    let seeding = [
-        BookSeed {
-            title: "Cinderella".to_string(),
-        },
-        BookSeed {
-            title: "Rapunzel".to_string(),
-        },
-        BookSeed {
-            title: "Snow White".to_string(),
-        },
-    ];
-
     sqlx::query("INSERT INTO book (title) VALUES (UNNEST($1::TEXT[])) RETURNING *")
-        .bind(
-            seeding
-                .iter()
-                .map(|b| b.title.clone())
-                .collect::<Vec<String>>(),
-        )
+        .bind(vec!["Cinderella", "Rapunzel", "Snow White"])
         .fetch_all(pool)
         .await
         .unwrap()
