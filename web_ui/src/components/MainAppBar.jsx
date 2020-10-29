@@ -1,9 +1,10 @@
+import React from "react"
 import AppBar from "@material-ui/core/AppBar"
 import Box from "@material-ui/core/Box"
 import Button from "@material-ui/core/Button"
 import Toolbar from "@material-ui/core/Toolbar"
-import React from "react"
 import { useDispatch, useSelector } from "react-redux"
+
 import { routes } from "src/constants"
 import { history } from "src/setup"
 import userStore from "src/store/user"

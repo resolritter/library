@@ -1,3 +1,32 @@
+const fs = require("fs")
+const path = require("path")
+
+const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+const getSubDirectoriesRegex = (dir) => {
+  const regexGroup = fs
+    .readdirSync(dir, {
+      withFileTypes: true,
+    })
+    .map((filePath) =>
+      filePath.isDirectory()
+        ? filePath.name
+        : filePath.name.substr(0, filePath.name.lastIndexOf(".")) ||
+          filePath.name,
+    )
+    .reduce((acc, filePath) => `${acc}|${escapeRegExp(filePath)}`, "")
+
+  return `^(${regexGroup})(\\/.*|$)`
+}
+
+const nodeModulesImportRegex = getSubDirectoriesRegex(
+  path.join(__dirname, "./node_modules"),
+)
+
+const rootModulesImportRegex = getSubDirectoriesRegex(
+  path.join(__dirname, "./src"),
+)
+
 module.exports = {
   root: true,
   extends: ["eslint:recommended", "plugin:react/recommended"],
@@ -41,9 +70,27 @@ module.exports = {
     "no-multiple-empty-lines": ["error", { max: 1, maxEOF: 1 }],
 
     // related to the "simple-import-sort" plugin
-    "simple-import-sort/sort": "error",
     "sort-imports": "off",
     "import/order": "off",
+    "simple-import-sort/sort": [
+      "error",
+      {
+        groups: [
+          ["^react(\\/.*|$)", nodeModulesImportRegex],
+          [rootModulesImportRegex],
+          [
+            "^\\.$",
+            // Parent imports
+            "^\\.\\.(?!/?$)",
+            "^\\.\\./?$",
+            // Other relative imports
+            "^\\./(?=.*/)(?!/?$)",
+            "^\\.(?!/?$)",
+            "^\\./?$",
+          ],
+        ],
+      },
+    ],
 
     // misc
     "require-atomic-updates": "off",

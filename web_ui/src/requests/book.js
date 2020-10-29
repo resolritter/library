@@ -1,9 +1,10 @@
 import { StatusCodes } from "http-status-codes"
+
+import { getCors, handleErrorResponse } from "."
+
 import { apiEndpoints } from "src/constants"
 import { store } from "src/setup"
 import booksStore from "src/store/book"
-
-import { getCors, handleErrorResponse } from "."
 
 export const loadBooks = async function () {
   const response = await fetch(apiEndpoints.books(), {

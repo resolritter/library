@@ -1,3 +1,4 @@
+import React from "react"
 import {
   Card,
   CardContent,
@@ -9,7 +10,7 @@ import {
   withStyles,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
-import React from "react"
+
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"

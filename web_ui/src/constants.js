@@ -1,4 +1,5 @@
 import { zipObject } from "lodash-es"
+
 import { dictionaryOf } from "src/utils"
 
 export const devAPIURL = "http://localhost:8080"

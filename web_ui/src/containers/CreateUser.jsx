@@ -1,3 +1,4 @@
+import React from "react"
 import {
   Card,
   CardContent,
@@ -11,7 +12,7 @@ import {
   withStyles,
 } from "@material-ui/core"
 import { useSnackbar } from "notistack"
-import React from "react"
+
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
 import { routes, userUIAccessLevels } from "src/constants"
 import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
@@ -37,7 +38,6 @@ const CreateUserButtonRow = withStyles({
 
 export function CreateUser() {
   const { enqueueSnackbar } = useSnackbar()
-  const createUserForm = React.useRef()
   const [email, setEmail] = React.useState("user@user.com")
   const [accessLevel, setAccessLevel] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
@@ -51,7 +51,6 @@ export function CreateUser() {
               Create User
             </CreateUserColumnTitle>
             <form
-              ref={createUserForm}
               onSubmit={async function (ev) {
                 ev.preventDefault()
                 setIsLoading(true)

@@ -1,9 +1,10 @@
 import { StatusCodes } from "http-status-codes"
+
+import { getAccessToken, getCors, handleErrorResponse } from "."
+
 import { apiEndpoints, userAPIAccessLevels } from "src/constants"
 import { store } from "src/setup"
 import userStore from "src/store/user"
-
-import { getAccessToken, getCors, handleErrorResponse } from "."
 
 export const login = async function ({ email }) {
   const response = await fetch(apiEndpoints.session(), {
