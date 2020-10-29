@@ -19,19 +19,18 @@ use tide::Server;
 
 static GLOBAL: OnceCell<&'static Global> = OnceCell::new();
 
-macro_rules! init_actors {
-    ($($actors: ident),+) => {
-        $($actors)+.set(&*Box::leak(Box::new(RwLock::new(None)))).unwrap();
-    };
-}
-
 macro_rules! staticfy {
     ($e: expr $(,)?) => {
         &*Box::leak(Box::new($e))
     };
 }
 
-// TODO turn those environment variables into command line arguments
+macro_rules! init_actors {
+    ($($actors: ident),+) => {
+        $($actors)+.set(staticfy!(RwLock::new(None))).unwrap();
+    };
+}
+
 #[async_std::main]
 async fn main() {
     let cli_args: &'static ArgMatches = staticfy!(App::new("library")
@@ -139,16 +138,14 @@ async fn main() {
     setup_database(&db_url, db_pool, is_resetting_and_seeding).await;
 
     // Initialize the global static environment
-    GLOBAL
-        .set(&*Box::leak(Box::new(Global { db_pool })))
-        .unwrap();
+    GLOBAL.set(staticfy!(Global { db_pool })).unwrap();
 
     // Initialize the actors
     init_actors!(BOOK);
 
     // Initialize the supervision tree
     let listen_addr: &'static str =
-        &*staticfy!(cli_args.value_of("listen").unwrap_or("127.0.0.1:8080"),);
+        staticfy!(cli_args.value_of("listen").unwrap_or("127.0.0.1:8080"),);
     Bastion::init();
     Bastion::supervisor(|sup| sup.children(resources::book::actor))
         .and_then(|_| Bastion::supervisor(|sup| sup.children(|child| root(child, listen_addr))))
