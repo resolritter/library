@@ -27,6 +27,7 @@ structout::generate!(
         BookGetByTitlePayload => [include(title)],
         BookBorrowByTitleRequestBody => [include(borrow_length), upsert(pub borrow_id: BorrowBookId)],
         BookEndBorrowByTitlePayload => [include(title), upsert(pub access_token: String)],
+        BookCreationPayloadRequestBody => [include(title)],
         BookCreationPayload => [include(title), upsert(pub access_token: String)],
         BookBorrowByTitlePayload => [include(title, borrow_length), upsert(pub borrow_id: BorrowBookId)]
     }

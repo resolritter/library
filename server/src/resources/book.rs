@@ -8,7 +8,8 @@ use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
     access_mask, Book, BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookCreationPayload,
-    BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic, BookPublicListPayload,
+    BookCreationPayloadRequestBody, BookEndBorrowByTitlePayload, BookGetByTitlePayload, BookPublic,
+    BookPublicListPayload,
 };
 use percent_encoding::percent_decode;
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
@@ -154,7 +155,13 @@ pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::E
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
     match require_auth_token(&req).await {
-        (StatusCode::Ok, Some(_)) => Ok(req.body_json::<BookCreationPayload>().await?),
+        (StatusCode::Ok, Some(access_token)) => {
+            let body = req.body_json::<BookCreationPayloadRequestBody>().await?;
+            Ok(BookCreationPayload {
+                title: body.title,
+                access_token,
+            })
+        }
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }

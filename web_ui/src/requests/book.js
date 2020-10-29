@@ -73,7 +73,6 @@ export const createBook = async function ({ access_token }, { title }) {
     },
     body: JSON.stringify({
       title,
-      access_token,
     }),
   })
 
