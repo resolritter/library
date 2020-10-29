@@ -1,5 +1,5 @@
-use crate::entities::{Book, BookGet, BookGetMessage, ServerState};
-use crate::messages::{ActorGroups, BOOK};
+use crate::entities::{Book, BookByTitlePayload, ServerState};
+use crate::messages::{ActorGroups, BookByTitleMsg, BOOK};
 use crate::resources::respond_with;
 use bastion::prelude::*;
 use sqlx::{PgPool, Row};
@@ -23,7 +23,7 @@ pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Result<Option<Boo
 }
 
 pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
-    let payload = BookGet {
+    let payload = BookByTitlePayload {
         title: req.param("title").unwrap(),
     };
     let (reply, r) = crossbeam_channel::bounded::<Option<Book>>(1);
@@ -35,7 +35,7 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
             .read()
             .as_ref()
             .unwrap()
-            .send(BookGetMessage {
+            .send(BookByTitleMsg {
                 reply,
                 payload,
                 db_pool: state.global.db_pool,
@@ -61,7 +61,7 @@ pub fn actor(children: Children) -> Children {
     children
         .with_name(ActorGroups::Book.as_ref())
         .with_exec(move |_| async move {
-            let (channel, r) = crossbeam_channel::unbounded::<BookGetMessage>();
+            let (channel, r) = crossbeam_channel::unbounded::<BookByTitleMsg>();
             unsafe {
                 let mut lock = BOOK.get().unwrap().write();
                 *lock = Some(channel);
@@ -69,7 +69,7 @@ pub fn actor(children: Children) -> Children {
             println!("Book actor is ready!");
 
             loop {
-                let BookGetMessage {
+                let BookByTitleMsg {
                     reply,
                     payload,
                     db_pool,

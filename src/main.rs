@@ -4,17 +4,22 @@ mod resources;
 
 use crate::messages::{ActorGroups, BOOK};
 use bastion::prelude::*;
-use entities::{BookGetMessage, Global, ServerState};
+use entities::{Global, ServerState};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-
 use tide::http::headers::HeaderValue;
 use tide::security::CorsMiddleware;
 use tide::security::Origin;
 use tide::Server;
 
 static GLOBAL: OnceCell<&'static Global> = OnceCell::new();
+
+macro_rules! init_actors {
+    ($($actors: ident),+) => {
+        $($actors)+.set(&*Box::leak(Box::new(RwLock::new(None)))).unwrap();
+    };
+}
 
 #[async_std::main]
 async fn main() {
@@ -29,10 +34,8 @@ async fn main() {
         .unwrap();
 
     // Initialize the actors
-    let child: &'static RwLock<Option<crossbeam_channel::Sender<BookGetMessage>>> =
-        &*Box::leak(Box::new(RwLock::new(None)));
     unsafe {
-        BOOK.set(child).unwrap();
+        init_actors!(BOOK);
     }
 
     // Initialize the supervision tree

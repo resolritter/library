@@ -1101,6 +1101,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "structout",
  "strum",
  "strum_macros",
  "tide",
@@ -1121,6 +1122,15 @@ name = "linked-hash-map"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
+
+[[package]]
+name = "linked_hash_set"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47186c6da4d81ca383c7c47c1bfc80f4b95f4720514d860a5407aaf4233f9588"
+dependencies = [
+ "linked-hash-map",
+]
 
 [[package]]
 name = "lock_api"
@@ -1905,6 +1915,18 @@ checksum = "8ee348cb74b87454fff4b551cbf727025810a004f88aeacae7f85b87f4e9a1c1"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "structout"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7432026a3f841989a7497c4aca513a82309ca5d2f120d4ab8f72be8731d8136"
+dependencies = [
+ "linked_hash_set",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
