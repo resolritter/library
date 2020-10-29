@@ -72,6 +72,7 @@ export function CreateBook() {
                     setTitle(ev.target.value)
                   }}
                   required
+                  autoFocus
                 />
               </FormControl>
               <ButtonRow fullWidth>
