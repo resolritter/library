@@ -3,17 +3,20 @@ use stdext::function_name;
 use surf::http::mime::JSON;
 use surf::StatusCode;
 use tempdir::TempDir;
-use test_utils::{format::format_test_name, read_snapshot, spawn_test_program, SpawnedTest};
+use test_utils::{
+    format::format_test_name, port::get_free_port, read_snapshot, spawn_test_program, SpawnedTest,
+};
 
 #[async_std::test]
 async fn test_get() -> std::io::Result<()> {
+    let app_port = get_free_port();
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
-        mut process,
         log_dir,
-    } = spawn_test_program(&tmp_dir);
+        process: _,
+    } = &spawn_test_program(&tmp_dir, app_port);
 
     // Check that a book exists and can be retrieved from the API
     let book_route = format!("{}/book/Rapunzel", &server_addr);
@@ -22,19 +25,20 @@ async fn test_get() -> std::io::Result<()> {
     assert_snapshot!(test_name, get.body_string().await.unwrap());
 
     assert_snapshot!(read_snapshot(&log_dir));
-    process.kill().unwrap();
+
     Ok(())
 }
 
 #[async_std::test]
 async fn test_lease() -> std::io::Result<()> {
+    let app_port = get_free_port();
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
-        mut process,
         log_dir,
-    } = spawn_test_program(&tmp_dir);
+        process: _,
+    } = &spawn_test_program(&tmp_dir, app_port);
 
     let book_route = format!("{}/book/Rapunzel", &server_addr);
     let borrow_for_a_day = r#"{ "lease_length": 86400 }"#;
@@ -61,6 +65,6 @@ async fn test_lease() -> std::io::Result<()> {
     assert_snapshot!(format!("{}_bad", test_name), result);
 
     assert_snapshot!(read_snapshot(&log_dir));
-    process.kill().unwrap();
+
     Ok(())
 }

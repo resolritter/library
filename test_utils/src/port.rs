@@ -1,12 +1,15 @@
-use crate::path::executable_path;
+use crate::path::{executable_path, tests_lock_path};
 use std::process::{Command, Stdio};
 
 pub type Port = u16;
 
 pub fn get_free_port() -> Port {
     String::from_utf8_lossy(
-        &Command::new(executable_path())
-            .arg("get_port")
+        &Command::new("flock")
+            .arg("-x")
+            .arg(tests_lock_path())
+            .arg("-c")
+            .arg(format!("{} get_port_sync", executable_path()))
             .stdout(Stdio::piped())
             .spawn()
             .unwrap()

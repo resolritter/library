@@ -13,6 +13,10 @@ get_available_port () {
       fi
     done
 
+    if [ "$1" = "sync" ] && [ "$(node /home/reaysawa/rs/library/scripts/index.js "$port")" ]; then
+      continue
+    fi
+
     echo "$port"
     break
   done
@@ -31,6 +35,10 @@ while [[ "$#" -gt 0 ]]; do
     # commands
     get_port)
       get_available_port
+      exit $?
+    ;;
+    get_port_sync)
+      get_available_port sync
       exit $?
     ;;
     test|test_server|server|db|test_db) CMD="$1";;

@@ -3,7 +3,7 @@ pub mod path;
 pub mod port;
 
 use crate::path::executable_path;
-use crate::port::get_free_port;
+use crate::port::Port;
 use async_process::Command;
 use notify::{raw_watcher, RecursiveMode, Watcher};
 use std::fs::File;
@@ -17,8 +17,23 @@ pub struct SpawnedTest {
     pub process: async_process::Child,
 }
 
-pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
-    let app_port = get_free_port();
+impl Drop for SpawnedTest {
+    fn drop(&mut self) {
+        // kill the whole tree of subprocesses spawned by the bash entrypoint
+        let mut proc_kill_cmd = String::from("kill -- -$(pstree -g ");
+        proc_kill_cmd.push_str(format!("{}", self.process.id()).as_str());
+        proc_kill_cmd.push_str(" | head -n1 | awk '{ m=match($0, /^\\s*[^\\(]+\\(([0-9]+)/, ms); if (m) { print ms[1] } }')");
+        std::process::Command::new("bash")
+            .arg("-c")
+            .arg(proc_kill_cmd)
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+    }
+}
+
+pub fn spawn_test_program(tmp_dir: &TempDir, app_port: Port) -> SpawnedTest {
     let app_dir = tmp_dir.path().to_str().unwrap();
     let instance = tmp_dir.path().extension().unwrap().to_str().unwrap();
     let server_addr = format!("http://localhost:{}", app_port);
@@ -55,6 +70,8 @@ pub fn spawn_test_program(tmp_dir: &TempDir) -> SpawnedTest {
             )
             .as_str(),
         );
+    // Pause for just a bit until the server is _actually_ ready to receive connections
+    std::thread::sleep(std::time::Duration::from_secs(1));
 
     SpawnedTest {
         server_addr,
