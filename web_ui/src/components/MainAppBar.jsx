@@ -22,6 +22,16 @@ export const MainAppBar = function () {
   return (
     <AppBar position="static">
       <Toolbar variant="dense">
+        <Box>
+          <Button
+            onClick={function () {
+              history.push(routes.home())
+            }}
+            color="inherit"
+          >
+            Books
+          </Button>
+        </Box>
         <Box
           display="flex"
           justifyContent="flex-end"
