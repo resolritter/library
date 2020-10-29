@@ -1,14 +1,14 @@
 const preprocessor = require("@cypress/webpack-preprocessor")
-module.exports = (on) => {
+module.exports = (on, config) => {
   const options = {
     webpackOptions: {
       resolve: {
-        extensions: [".ts", ".tsx", ".js"],
+        extensions: [".ts", ".js", ".json"],
       },
       module: {
         rules: [
           {
-            test: /\.tsx?$/,
+            test: /\.ts$/,
             loader: "ts-loader",
             options: { transpileOnly: true },
           },

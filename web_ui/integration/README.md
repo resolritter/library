@@ -1,35 +1,25 @@
-# Update
-
-Cypress now supports TypeScript out of the box so you no longer need this repo. Here is a lesson using the built in support:
-
-[![](https://img.youtube.com/vi/n3SvvZSWwfM/0.jpg)](https://www.youtube.com/watch?v=n3SvvZSWwfM)
-
-
-## Cypress + TypeScript quickstart
-Get started quickly with Cypress + TypeScript
-
-### Setup
+This template was started from https://github.com/basarat/cypress-ts, which adheres to the MIT license.
 
 ```
-git clone https://github.com/basarat/cypress-ts.git
-cd cypress-ts
-npm i
+The MIT License (MIT)
+
+Copyright (c) 2019 Basarat Ali Syed
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
-
-### Use
-
-* During development `npm start`
-* On build server `npm test`
-
-### Housekeeping
-* Update dependencies to latest : `npm run update`
-
-### YouTube Walkthrough
-[![](https://img.youtube.com/vi/1Vr1cAN_CLA/0.jpg)](https://www.youtube.com/watch?v=1Vr1cAN_CLA)
-
-### More
-* [Subscribe to youtube](https://www.youtube.com/basaratali)
-* [Follow me on twitter](https://twitter.com/basarat)
-* [How this template was made](https://basarat.gitbooks.io/typescript/docs/testing/cypress.html)
-
-Enjoy 🌹

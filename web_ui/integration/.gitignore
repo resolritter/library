@@ -4,3 +4,6 @@ cypress/screenshots
 
 # node
 node_modules
+
+# misc
+.tests.lock

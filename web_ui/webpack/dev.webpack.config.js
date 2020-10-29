@@ -16,7 +16,7 @@ module.exports = mergeConfigurations(baseConfiguration, {
   },
   devServer: {
     host: "localhost",
-    port: "3000",
+    port: process.env.PORT || "3000",
     clientLogLevel: "none",
     open: true,
     stats: "errors-only",
@@ -25,6 +25,7 @@ module.exports = mergeConfigurations(baseConfiguration, {
     contentBase: path.join(baseConfiguration.context, "assets"),
   },
   plugins: [
+    new webpack.EnvironmentPlugin(["API_URL"]),
     new MiniCssExtractPlugin({
       filename: "styles.css",
     }),
