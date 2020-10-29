@@ -1,5 +1,0 @@
----
-source: server/tests/book.rs
-expression: get.body_string().await.unwrap()
----
-{"id":2,"lease_id":null,"lease_until":null,"title":"Rapunzel"}

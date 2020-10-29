@@ -1,5 +1,0 @@
----
-source: server/tests/user.rs
-expression: user_str
----
-{"access_mask":0,"access_token":"user@user.com","email":"user@user.com"}

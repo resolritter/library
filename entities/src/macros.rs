@@ -23,15 +23,9 @@ macro_rules! books_route_root {
     };
 }
 #[macro_export]
-macro_rules! lease_route {
+macro_rules! book_borrow_route {
     () => {
-        "/lease/{}"
-    };
-}
-#[macro_export]
-macro_rules! end_loan_route {
-    () => {
-        "/end_loan/{}"
+        "/borrow/{}"
     };
 }
 #[macro_export]

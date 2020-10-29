@@ -1,8 +1,0 @@
----
-source: tests/book.rs
-expression: read_snapshot(&log_dir)
----
-BookGetByTitlePayload {
-    title: "Rapunzel",
-}
-

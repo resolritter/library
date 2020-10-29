@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod access_mask {
-    // 0x001 => Lease books
+    // 0x001 => Borrow books
     // 0x011 => Manage books + 0x01
     // 0x111 => Super user
     pub const USER: i32 = 0x001;
@@ -9,27 +9,27 @@ pub mod access_mask {
     pub const ADMIN: i32 = 0x111;
 }
 
-type LeaseBookId = String;
-type BookLeaseLength = i64;
+type BorrowBookId = String;
+type BookBorrowLength = i64;
 
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]
     pub {
         pub id: i32,
         pub title: String,
-        pub lease_id: Option<LeaseBookId>,
-        pub lease_until: Option<BookLeaseLength>,
-        pub lease_length: BookLeaseLength,
+        pub borrow_id: Option<BorrowBookId>,
+        pub borrow_until: Option<BookBorrowLength>,
+        pub borrow_length: BookBorrowLength,
     } => {
-        Book => [omit(lease_length)],
-        // 'lease_id' refers to the current borrower of the book;
+        Book => [omit(borrow_length)],
+        // 'borrow_id' refers to the current borrower of the book;
         // of course, it should be hidden for the general public
-        BookPublic => [omit(lease_id, lease_length)],
+        BookPublic => [omit(borrow_id, borrow_length)],
         BookGetByTitlePayload => [include(title)],
-        BookLeaseByTitleRequestBody => [include(lease_length), upsert(pub lease_id: LeaseBookId)],
-        BookEndLoanByTitlePayload => [include(title), upsert(pub lease_id: LeaseBookId, pub access_token: String)],
+        BookBorrowByTitleRequestBody => [include(borrow_length), upsert(pub borrow_id: BorrowBookId)],
+        BookEndBorrowByTitlePayload => [include(title), upsert(pub borrow_id: BorrowBookId, pub access_token: String)],
         BookCreationPayload => [include(title), upsert(pub access_token: String)],
-        BookLeaseByTitlePayload => [include(title, lease_length), upsert(pub lease_id: LeaseBookId)]
+        BookBorrowByTitlePayload => [include(title, borrow_length), upsert(pub borrow_id: BorrowBookId)]
     }
 );
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,7 +40,7 @@ pub struct BookPublicListPayload {
 structout::generate!(
     #[derive(Serialize, Deserialize, Debug)]
     pub {
-        pub email: LeaseBookId,
+        pub email: BorrowBookId,
         pub access_mask: i32,
         pub access_token: String,
     } => {

@@ -1,14 +1,14 @@
 use crate::auth::require_auth_token;
 use crate::messages::{
-    BookCreationMsg, BookEndLoanByTitleMsg, BookGetByTitleMsg, BookLeaseByTitleMsg,
+    BookCreationMsg, BookEndBorrowByTitleMsg, BookGetByTitleMsg, BookBorrowByTitleMsg,
     BookPublicListMsg,
 };
 use crate::resources::user::check_access_mask;
 use crate::resources::ResponseData;
 use crate::state::ServerState;
 use entities::{
-    access_mask, Book, BookCreationPayload, BookEndLoanByTitlePayload, BookGetByTitlePayload,
-    BookLeaseByTitlePayload, BookLeaseByTitleRequestBody, BookPublic, BookPublicListPayload,
+    access_mask, Book, BookCreationPayload, BookEndBorrowByTitlePayload, BookGetByTitlePayload,
+    BookBorrowByTitlePayload, BookBorrowByTitleRequestBody, BookPublic, BookPublicListPayload,
 };
 use sqlx::{postgres::PgRow, Done, PgPool, Row};
 use std::time::SystemTime;
@@ -18,8 +18,8 @@ pub fn from_row(row: &PgRow) -> Result<Book, sqlx::Error> {
     Ok(Book {
         id: row.try_get("id")?,
         title: row.try_get("title")?,
-        lease_id: row.try_get("lease_id")?,
-        lease_until: row.try_get("lease_until")?,
+        borrow_id: row.try_get("borrow_id")?,
+        borrow_until: row.try_get("borrow_until")?,
     })
 }
 
@@ -27,23 +27,23 @@ pub fn public_from_row(row: &PgRow) -> Result<BookPublic, sqlx::Error> {
     Ok(BookPublic {
         id: row.try_get("id")?,
         title: row.try_get("title")?,
-        lease_until: row.try_get("lease_until")?,
+        borrow_until: row.try_get("borrow_until")?,
     })
 }
 
 #[inline(always)]
-pub async fn end_loan_by_title(
-    msg: &BookEndLoanByTitleMsg,
+pub async fn end_borrow_by_title(
+    msg: &BookEndBorrowByTitleMsg,
 ) -> Result<ResponseData<()>, sqlx::Error> {
-    let raw = sqlx::query("SELECT lease_id FROM book WHERE title=$1")
+    let raw = sqlx::query("SELECT borrow_id FROM book WHERE title=$1")
         .bind(&msg.payload.title)
         .fetch_optional(msg.db_pool)
         .await?;
 
     if let Some(row) = raw {
-        let lease_id: Option<String> = row.try_get("lease_id")?;
-        if let Some(lease_id) = lease_id {
-            if lease_id == msg.payload.access_token
+        let borrow_id: Option<String> = row.try_get("borrow_id")?;
+        if let Some(borrow_id) = borrow_id {
+            if borrow_id == msg.payload.access_token
                 || check_access_mask(
                     &msg.payload.access_token,
                     access_mask::LIBRARIAN,
@@ -52,7 +52,7 @@ pub async fn end_loan_by_title(
                 .await?
             {
                 let try_return = sqlx::query(
-                    "UPDATE book SET lease_id = NULL, lease_until = NULL WHERE title=$1",
+                    "UPDATE book SET borrow_id = NULL, borrow_until = NULL WHERE title=$1",
                 )
                 .bind(&msg.payload.title)
                 .execute(msg.db_pool)
@@ -74,23 +74,23 @@ pub async fn end_loan_by_title(
     }
 }
 #[inline(always)]
-async fn extract_end_loan(
+async fn extract_end_borrow(
     req: &mut Request<ServerState>,
-) -> tide::Result<BookEndLoanByTitlePayload> {
+) -> tide::Result<BookEndBorrowByTitlePayload> {
     match require_auth_token(&req).await {
-        (StatusCode::Ok, Some(access_token)) => Ok(BookEndLoanByTitlePayload {
+        (StatusCode::Ok, Some(access_token)) => Ok(BookEndBorrowByTitlePayload {
             title: req.param("title")?,
-            lease_id: req.param("lease_id")?,
+            borrow_id: req.param("borrow_id")?,
             access_token,
         }),
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
 actor_response_handler::generate!(Config {
-    name: end_loan,
+    name: end_borrow,
     actor: Book,
     response_type: (),
-    tag: EndLoanByTitle
+    tag: EndBorrowByTitle
 });
 
 #[inline(always)]
@@ -153,7 +153,7 @@ actor_response_handler::generate!(Config {
 });
 
 #[inline(always)]
-pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
+pub async fn borrow_by_id(msg: &BookBorrowByTitleMsg) -> Result<ResponseData<String>, sqlx::Error> {
     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs(),
         Err(_) => panic!("SystemTime before UNIX EPOCH!"),
@@ -170,19 +170,19 @@ pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<Strin
         return Ok(ResponseData(StatusCode::NotFound, None));
     }
 
-    let lease_length = &msg.payload.lease_length;
-    let lease_id = &msg.payload.lease_id;
-    let try_lease = sqlx::query(
-        "UPDATE book SET lease_until=$1,lease_id=$2 WHERE title=$3 AND lease_until IS NULL OR lease_until < $4",
+    let borrow_length = &msg.payload.borrow_length;
+    let borrow_id = &msg.payload.borrow_id;
+    let try_borrow = sqlx::query(
+        "UPDATE book SET borrow_until=$1,borrow_id=$2 WHERE title=$3 AND borrow_until IS NULL OR borrow_until < $4",
     )
-    .bind(now + lease_length)
-    .bind(lease_id)
+    .bind(now + borrow_length)
+    .bind(borrow_id)
     .bind(title)
     .bind(now)
     .execute(msg.db_pool)
     .await?;
 
-    if try_lease.rows_affected() == 0 {
+    if try_borrow.rows_affected() == 0 {
         Ok(ResponseData(
             StatusCode::Forbidden,
             Some("This book is not available for borrowing".to_string()),
@@ -192,27 +192,27 @@ pub async fn lease_by_id(msg: &BookLeaseByTitleMsg) -> Result<ResponseData<Strin
     }
 }
 #[inline(always)]
-async fn extract_lease_book(
+async fn extract_borrow_book(
     req: &mut Request<ServerState>,
-) -> tide::Result<BookLeaseByTitlePayload> {
+) -> tide::Result<BookBorrowByTitlePayload> {
     match require_auth_token(&req).await {
         (StatusCode::Ok, Some(_)) => {
-            let body = req.body_json::<BookLeaseByTitleRequestBody>().await?;
+            let body = req.body_json::<BookBorrowByTitleRequestBody>().await?;
 
-            Ok(BookLeaseByTitlePayload {
+            Ok(BookBorrowByTitlePayload {
                 title: req.param("title")?,
-                lease_length: body.lease_length,
-                lease_id: req.param("lease_id")?,
+                borrow_length: body.borrow_length,
+                borrow_id: req.param("borrow_id")?,
             })
         }
         (status_code, _) => Err(tide::Error::from_str(status_code, "")),
     }
 }
 actor_response_handler::generate!(Config {
-    name: lease_book,
+    name: borrow_book,
     actor: Book,
     response_type: String,
-    tag: LeaseByTitle
+    tag: BorrowByTitle
 });
 
 #[inline(always)]
@@ -220,10 +220,10 @@ pub async fn public_list_by_query(
     msg: &BookPublicListMsg,
 ) -> Result<ResponseData<Vec<BookPublic>>, sqlx::Error> {
     let result = if let Some(title_query) = &msg.payload.query {
-        sqlx::query("SELECT id, title, lease_until FROM book WHERE title ILIKE CONCAT('%',$1,'%')")
+        sqlx::query("SELECT id, title, borrow_until FROM book WHERE title ILIKE CONCAT('%',$1,'%')")
             .bind(title_query)
     } else {
-        sqlx::query("SELECT id, title, lease_until FROM book")
+        sqlx::query("SELECT id, title, borrow_until FROM book")
     }
     .fetch_all(msg.db_pool)
     .await?;
@@ -249,8 +249,8 @@ actor_response_handler::generate!(Config {
 
 endpoint_actor::generate!({ actor: Book }, {
     GetByTitle: get_by_title,
-    LeaseByTitle: lease_by_id,
-    EndLoanByTitle: end_loan_by_title,
+    BorrowByTitle: borrow_by_id,
+    EndBorrowByTitle: end_borrow_by_title,
     Creation: create,
     PublicList: public_list_by_query
 });

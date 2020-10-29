@@ -1,0 +1,4 @@
+---
+source: server/tests/book.rs
+expression: "book::borrow(&server_addr, &first_user.access_token,\n             &payload).await.body_string().await.unwrap()"
+---

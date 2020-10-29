@@ -9,9 +9,7 @@ use crate::messages::ActorGroups;
 use crate::state::{Global, ServerState};
 use bastion::prelude::*;
 use clap::{App, Arg, ArgMatches};
-use entities::{
-    book_route, books_route, books_route_root, end_loan_route, lease_route, session_route,
-};
+use entities::{book_borrow_route, book_route, books_route, books_route_root, session_route};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -224,18 +222,18 @@ fn root(
                 .get(resources::book::public_list);
             server
                 .at(format!(
-                    concat!(book_route!(), lease_route!(),),
-                    ":title", ":lease_id"
+                    concat!(book_route!(), book_borrow_route!(),),
+                    ":title", ":borrow_id"
                 )
                 .as_str())
-                .post(resources::book::lease_book);
+                .post(resources::book::borrow_book);
             server
                 .at(format!(
-                    concat!(book_route!(), end_loan_route!(),),
-                    ":title", ":lease_id"
+                    concat!(book_route!(), book_borrow_route!(),),
+                    ":title", ":borrow_id"
                 )
                 .as_str())
-                .patch(resources::book::end_loan);
+                .delete(resources::book::end_borrow);
 
             server.at(session_route!()).post(resources::user::login);
 

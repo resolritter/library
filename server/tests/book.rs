@@ -66,8 +66,8 @@ async fn test_create_and_get() {
 }
 
 #[async_std::test]
-async fn test_lease() {
-    use entities::{book, user, BookLeaseByTitlePayload, UserCreationPayload};
+async fn test_borrow() {
+    use entities::{book, user, BookBorrowByTitlePayload, UserCreationPayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
@@ -87,10 +87,10 @@ async fn test_lease() {
         },
     )
     .await;
-    let payload = BookLeaseByTitlePayload {
+    let payload = BookBorrowByTitlePayload {
         title: "Rapunzel".to_string(),
-        lease_id: first_user.email.clone(),
-        lease_length: WHOLE_DAY,
+        borrow_id: first_user.email.clone(),
+        borrow_length: WHOLE_DAY,
     };
 
     // The route should be protected against invalid tokens
@@ -99,7 +99,7 @@ async fn test_lease() {
         .unwrap();
     assert!(guest_user.status() == StatusCode::Forbidden);
 
-    // Lease a book for a whole day
+    // Borrow a book for a whole day
     assert_snapshot!(
         format!("{}_good", test_name),
         book::borrow(&server_addr, &first_user.access_token, &payload)
@@ -109,7 +109,7 @@ async fn test_lease() {
             .unwrap()
     );
 
-    // The book is already leased to somebody, thus the following should not work
+    // The book is already borrowd to somebody, thus the following should not work
     let bad_borrow = book::do_borrow(&server_addr, &first_user.access_token, &payload)
         .await
         .unwrap();
@@ -119,9 +119,9 @@ async fn test_lease() {
 }
 
 #[async_std::test]
-async fn test_end_loan() {
+async fn test_end_borrow() {
     use entities::{
-        book, user, BookEndLoanByTitlePayload, BookLeaseByTitlePayload, UserCreationPayload,
+        book, user, BookEndBorrowByTitlePayload, BookBorrowByTitlePayload, UserCreationPayload,
     };
 
     let test_name = format_test_name(function_name!());
@@ -151,41 +151,41 @@ async fn test_end_loan() {
         },
     )
     .await;
-    let mut borrow_payload = BookLeaseByTitlePayload {
+    let mut borrow_payload = BookBorrowByTitlePayload {
         title: "Rapunzel".to_string(),
-        lease_id: first_user.email.clone(),
-        lease_length: WHOLE_DAY,
+        borrow_id: first_user.email.clone(),
+        borrow_length: WHOLE_DAY,
     };
 
     // Borrow a book with the first user
     book::borrow(&server_addr, &first_user.access_token, &borrow_payload).await;
 
-    // The second user won't be able to end the loan on behalf of the first
-    let mut end_loan_payload = BookEndLoanByTitlePayload {
+    // The second user won't be able to end the borrow on behalf of the first
+    let mut end_borrow_payload = BookEndBorrowByTitlePayload {
         title: borrow_payload.title.clone(),
-        lease_id: borrow_payload.lease_id.clone(),
+        borrow_id: borrow_payload.borrow_id.clone(),
         access_token: second_user.access_token.to_string(),
     };
-    let bad_forbidden_end_loan = book::do_end_loan(&server_addr, &end_loan_payload)
+    let bad_forbidden_end_borrow = book::do_end_borrow(&server_addr, &end_borrow_payload)
         .await
         .unwrap();
-    assert!(bad_forbidden_end_loan.status() == StatusCode::Forbidden);
+    assert!(bad_forbidden_end_borrow.status() == StatusCode::Forbidden);
 
-    // The first user can end the loan on its own
-    end_loan_payload = BookEndLoanByTitlePayload {
+    // The first user can end the borrow on its own
+    end_borrow_payload = BookEndBorrowByTitlePayload {
         access_token: first_user.access_token.to_string(),
-        ..end_loan_payload
+        ..end_borrow_payload
     };
-    book::end_loan(&server_addr, &end_loan_payload).await;
+    book::end_borrow(&server_addr, &end_borrow_payload).await;
 
     // Now the book is free and the second user will be able to borrow it
-    borrow_payload = BookLeaseByTitlePayload {
-        lease_id: second_user.email.clone(),
+    borrow_payload = BookBorrowByTitlePayload {
+        borrow_id: second_user.email.clone(),
         ..borrow_payload
     };
     book::borrow(&server_addr, &second_user.access_token, &borrow_payload).await;
 
-    // Librarians will be able to end the loan on the behalf of normal users
+    // Librarians will be able to end the borrow on the behalf of normal users
     let (_, librarian_user) = user::create(
         &server_addr,
         &UserCreationPayload {
@@ -195,11 +195,11 @@ async fn test_end_loan() {
         },
     )
     .await;
-    book::end_loan(
+    book::end_borrow(
         &server_addr,
-        &BookEndLoanByTitlePayload {
+        &BookEndBorrowByTitlePayload {
             title: borrow_payload.title.clone(),
-            lease_id: borrow_payload.lease_id.clone(),
+            borrow_id: borrow_payload.borrow_id.clone(),
             access_token: librarian_user.access_token.to_string(),
         },
     )

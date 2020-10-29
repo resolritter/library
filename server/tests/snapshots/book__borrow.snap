@@ -7,14 +7,13 @@ UserCreationPayload {
     access_mask: 1,
     requester_access_token: None,
 }
-BookLeaseByTitlePayload {
+BookBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_length: 86400,
-    lease_id: "simple@user.com",
+    borrow_length: 86400,
+    borrow_id: "simple@user.com",
 }
-BookLeaseByTitlePayload {
+BookBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_length: 86400,
-    lease_id: "simple@user.com",
+    borrow_length: 86400,
+    borrow_id: "simple@user.com",
 }
-

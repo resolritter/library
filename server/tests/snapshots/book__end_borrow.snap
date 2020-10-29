@@ -12,25 +12,25 @@ UserCreationPayload {
     access_mask: 1,
     requester_access_token: None,
 }
-BookLeaseByTitlePayload {
+BookBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_length: 86400,
-    lease_id: "first@user.com",
+    borrow_length: 86400,
+    borrow_id: "first@user.com",
 }
-BookEndLoanByTitlePayload {
+BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_id: "first@user.com",
+    borrow_id: "first@user.com",
     access_token: "second@user.com",
 }
-BookEndLoanByTitlePayload {
+BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_id: "first@user.com",
+    borrow_id: "first@user.com",
     access_token: "first@user.com",
 }
-BookLeaseByTitlePayload {
+BookBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_length: 86400,
-    lease_id: "second@user.com",
+    borrow_length: 86400,
+    borrow_id: "second@user.com",
 }
 UserCreationPayload {
     email: "librarian@user.com",
@@ -39,9 +39,8 @@ UserCreationPayload {
         "admin_access_token",
     ),
 }
-BookEndLoanByTitlePayload {
+BookEndBorrowByTitlePayload {
     title: "Rapunzel",
-    lease_id: "second@user.com",
+    borrow_id: "second@user.com",
     access_token: "librarian@user.com",
 }
-

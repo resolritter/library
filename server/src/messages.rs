@@ -12,9 +12,9 @@ resource_messaging::generate!(User, [(Creation, User), (Login, User)]);
 resource_messaging::generate!(
     Book,
     [
-        (LeaseByTitle, String),
+        (BorrowByTitle, String),
         (GetByTitle, Book),
-        (EndLoanByTitle, ()),
+        (EndBorrowByTitle, ()),
         (Creation, Book),
         (PublicList, Vec<BookPublic>),
     ]
@@ -24,8 +24,8 @@ impl Loggable for BookMsg {
     fn to_log(&self) -> String {
         match self {
             BookMsg::GetByTitle(msg) => format!("{:#?}", msg.payload),
-            BookMsg::LeaseByTitle(msg) => format!("{:#?}", msg.payload),
-            BookMsg::EndLoanByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::BorrowByTitle(msg) => format!("{:#?}", msg.payload),
+            BookMsg::EndBorrowByTitle(msg) => format!("{:#?}", msg.payload),
             BookMsg::Creation(msg) => format!("{:#?}", msg.payload),
             BookMsg::PublicList(msg) => format!("{:#?}", msg.payload),
         }
