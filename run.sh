@@ -2,6 +2,8 @@
 
 set -e
 
+root_dir="$(dirname $(realpath "$0"))"
+
 get_available_port () {
   read lowest highest < /proc/sys/net/ipv4/ip_local_port_range
   local taken_ports=( $(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }' | uniq) )
@@ -13,7 +15,7 @@ get_available_port () {
       fi
     done
 
-    if [ "$1" = "sync" ] && [ "$(node /home/reaysawa/rs/library/scripts/index.js "$port")" ]; then
+    if [ "$1" = "sync" ] && [ "$(node "$root_dir/scripts/register_taken_port.js" "$port")" ]; then
       continue
     fi
 
@@ -76,6 +78,7 @@ db_deps () {
 }
 
 run_server () {
+  cd "$root_dir/server"
   cargo run -- --db-url="$DB_URL" $RUN_SERVER_EXTRA
 }
 

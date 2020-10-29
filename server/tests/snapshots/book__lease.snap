@@ -1,12 +1,12 @@
 ---
-source: tests/book.rs
+source: server/tests/book.rs
 expression: read_snapshot(&log_dir)
 ---
-LeaseBookByTitlePayload {
+BookLeaseByTitlePayload {
     title: "Rapunzel",
     lease_length: 86400,
 }
-LeaseBookByTitlePayload {
+BookLeaseByTitlePayload {
     title: "Rapunzel",
     lease_length: 86400,
 }

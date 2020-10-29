@@ -20,9 +20,9 @@ pub struct SpawnedTest {
 impl Drop for SpawnedTest {
     fn drop(&mut self) {
         // kill the whole tree of subprocesses spawned by the bash entrypoint
-        let mut proc_kill_cmd = String::from("kill -- -$(pstree -g ");
+        let mut proc_kill_cmd = String::from("kill -- $(pstree -p -g ");
         proc_kill_cmd.push_str(format!("{}", self.process.id()).as_str());
-        proc_kill_cmd.push_str(" | head -n1 | awk '{ m=match($0, /^\\s*[^\\(]+\\(([0-9]+)/, ms); if (m) { print ms[1] } }')");
+        proc_kill_cmd.push_str(" | head -n1 | awk '{ m=match($0, /library\\(([0-9]+)/, ms); if (m) { print ms[1] } }')");
         std::process::Command::new("bash")
             .arg("-c")
             .arg(proc_kill_cmd)

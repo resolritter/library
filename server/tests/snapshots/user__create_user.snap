@@ -1,0 +1,9 @@
+---
+source: server/tests/user.rs
+expression: read_snapshot(&log_dir)
+---
+UserCreationPayload {
+    email: "user@user.com",
+    access_level: 0,
+}
+

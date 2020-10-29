@@ -16,7 +16,7 @@ pub fn absolute_path(path: impl AsRef<Path>) -> std::io::Result<PathBuf> {
 }
 
 pub fn root_path() -> PathBuf {
-    absolute_path(format!("{}/../../..", file!())).unwrap()
+    absolute_path(format!("{}/../../../..", file!())).unwrap()
 }
 
 pub fn executable_path() -> String {
@@ -24,5 +24,5 @@ pub fn executable_path() -> String {
 }
 
 pub fn tests_lock_path() -> String {
-    format!("{}", root_path().join("tests/.tests.lock").display())
+    format!("{}", root_path().join("server/tests/.tests.lock").display())
 }
