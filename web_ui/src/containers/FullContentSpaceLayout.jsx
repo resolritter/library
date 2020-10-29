@@ -1,5 +1,4 @@
 import { styled } from "linaria/react"
-
 import { flexCenteredColumn } from "src/styles"
 
 // 48px is the minimum height for Material UI's app bar

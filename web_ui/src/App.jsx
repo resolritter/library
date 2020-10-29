@@ -1,11 +1,10 @@
 import * as React from "react"
 import { Route, Switch } from "react-router"
-
-import Login from "src/containers/Login"
-import FullPageLayout from "src/containers/FullPageLayout"
 import MainAppBar from "src/components/MainAppBar"
-import CreateUser from "src/containers/CreateUser"
 import { routes } from "src/constants"
+import CreateUser from "src/containers/CreateUser"
+import FullPageLayout from "src/containers/FullPageLayout"
+import Login from "src/containers/Login"
 
 export const ConnectedApp = function () {
   return (

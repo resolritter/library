@@ -1,25 +1,22 @@
-import React from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { fpGet } from "lodash/fp"
 import {
-  withStyles,
-  FormControl,
-  InputLabel,
-  Input,
-  FormHelperText,
-  Button,
   Card,
   CardContent,
   Container,
-  Box,
-  Typography,
-  Select,
+  FormControl,
+  Input,
+  InputLabel,
   MenuItem,
+  Select,
+  Typography,
+  withStyles,
 } from "@material-ui/core"
-
-import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
-import { flexCenteredColumn } from "src/styles"
+import React from "react"
 import LoadingSubmitButton from "src/components/LoadingSubmitButton"
+import { routes, userUIAccessLevels } from "src/constants"
+import { FullContentSpaceLayoutCentered } from "src/containers/FullContentSpaceLayout"
+import { createUser } from "src/requests/user"
+import { history } from "src/setup"
+import { flexCenteredColumn } from "src/styles"
 
 const CreateUserColumn = withStyles({
   root: flexCenteredColumn,
@@ -53,10 +50,16 @@ export function CreateUser() {
             </CreateUserColumnTitle>
             <form
               ref={createUserForm}
-              onSubmit={function (ev) {
+              onSubmit={async function (ev) {
                 ev.preventDefault()
                 setIsLoading(true)
-                console.log({ email, accessLevel })
+                const result = await createUser({ email, accessLevel })
+                if (result instanceof Error) {
+                  console.log(result.message)
+                  setIsLoading(false)
+                } else {
+                  history.push(routes.login())
+                }
               }}
             >
               <FormControl fullWidth>
@@ -83,8 +86,10 @@ export function CreateUser() {
                   id="access_level"
                 >
                   <MenuItem value={""}>None</MenuItem>
-                  <MenuItem value={"librarian"}>Librarian</MenuItem>
-                  <MenuItem value={"admin"}>Admin</MenuItem>
+                  <MenuItem value={userUIAccessLevels.librarian}>
+                    Librarian
+                  </MenuItem>
+                  <MenuItem value={userUIAccessLevels.admin}>Admin</MenuItem>
                 </Select>
               </FormControl>
               <CreateUserButtonRow fullWidth>

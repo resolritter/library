@@ -1,11 +1,10 @@
-import React from "react"
 import AppBar from "@material-ui/core/AppBar"
-import Toolbar from "@material-ui/core/Toolbar"
-import Button from "@material-ui/core/Button"
 import Box from "@material-ui/core/Box"
-import { withStyles } from "@material-ui/core/Button"
-import { history } from "src/setup"
+import Button from "@material-ui/core/Button"
+import Toolbar from "@material-ui/core/Toolbar"
+import React from "react"
 import { routes } from "src/constants"
+import { history } from "src/setup"
 
 export const MainAppBar = function () {
   return (
