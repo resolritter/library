@@ -1,6 +1,6 @@
 import { zipObject } from "lodash-es"
 
-const cssVariablePrefix = "--"
+import { userAPIAccessLevels } from "src/constants"
 
 export const promiseToSnackbar = function (enqueueSnackbar) {
   return function (prom, onOk, onError) {
@@ -25,20 +25,16 @@ export const promiseToSnackbar = function (enqueueSnackbar) {
   }
 }
 
-export const newCssVariableName = function (name) {
-  return `${cssVariablePrefix}${name}`
-}
-
-export const cssVariableValueOf = function (name) {
-  return `var(${newCssVariableName(name)})`
-}
-
 export const dictionaryOf = function (array) {
   return zipObject(array, array)
 }
 
 export const loadingStates = dictionaryOf(["notStarted", "loading", "loaded"])
 
-export const setCssVariable = function (name, value) {
-  document.documentElement.style.setProperty(newCssVariableName(name), value)
+export const getAccessMaskDisplayName = function (mask) {
+  for (const name in userAPIAccessLevels) {
+    if (userAPIAccessLevels[name] === mask) {
+      return name
+    }
+  }
 }

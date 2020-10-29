@@ -9,6 +9,7 @@ import { routes, userAPIAccessLevels } from "src/constants"
 import { history } from "src/setup"
 import userStore from "src/store/user"
 import { flexCenteredRow } from "src/styles"
+import { getAccessMaskDisplayName } from "src/utils"
 
 export const ButtonGap = function ({ separator = "" }) {
   return <Box width="1rem">{separator}</Box>
@@ -68,7 +69,10 @@ export const MainAppBar = function () {
           )}
           {user && (
             <>
-              <span>User: {user.email}</span>
+              <span>
+                User: {user.email} (access:{" "}
+                {getAccessMaskDisplayName(user.access_mask)})
+              </span>
               <ButtonGap />
               <Button
                 onClick={function () {

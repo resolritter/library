@@ -10,8 +10,11 @@ export const week = 7 * day
 export const devAPIURL = "http://localhost:8080"
 export const apiURL = process.env.API_URL ?? devAPIURL
 
-const userUIAccessLevelsList = ["", "librarian", "admin"]
-const userUIAccessLevelsListNamed = ["user", ...userUIAccessLevelsList.slice(1)]
+export const userUIAccessLevelsList = ["", "librarian", "admin"]
+export const userUIAccessLevelsListNamed = [
+  "user",
+  ...userUIAccessLevelsList.slice(1),
+]
 export const userUIAccessLevels = dictionaryOf(userUIAccessLevelsListNamed)
 export const userAPIAccessLevels = zipObject(userUIAccessLevelsListNamed, [
   0x001,
