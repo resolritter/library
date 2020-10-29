@@ -26,6 +26,8 @@ const TableHeaderCell = withStyles({
   },
 })(TableCell)
 
+const BorrowButton = function () {}
+
 export function Home() {
   const { enqueueSnackbar } = useSnackbar()
   const hasLoaded = React.useRef(loadingStates.notStarted)
@@ -87,20 +89,61 @@ export function Home() {
           <TableHead>
             <TableRow>
               <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Availability</TableHeaderCell>
-              <TableHeaderCell size="small"></TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell></TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {books.map(function ({ title, borrow_until }, i) {
               const canBeBorrowed = !borrow_until
               const borrowedUntilDate = new Date(borrow_until * 1000)
+              const isBorrowBookShown = user && canBeBorrowed
+              const isCancelBorrowBookShown =
+                !isBorrowBookShown &&
+                user &&
+                (userAPIAccessLevels.librarian & user.access_mask) ==
+                  userAPIAccessLevels.librarian
+
+              const borrowButton = (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={function () {
+                    handleWithSnackbar(borrowBook(user, { title }), reloadBooks)
+                  }}
+                  style={{ opacity: isBorrowBookShown ? 1 : 0 }}
+                >
+                  Borrow
+                </Button>
+              )
+              const cancelBorrowButton = (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={function () {
+                    handleWithSnackbar(
+                      endBookBorrow(user, { title }),
+                      reloadBooks,
+                    )
+                  }}
+                  style={{
+                    opacity: isCancelBorrowBookShown ? 1 : 0,
+                  }}
+                >
+                  Cancel Borrow
+                </Button>
+              )
+              const buttons = isCancelBorrowBookShown
+                ? [cancelBorrowButton, borrowButton]
+                : [borrowButton, cancelBorrowButton]
+
+              const sumPxNonTitleColumns = 580
               return (
                 <TableRow hover key={i}>
                   <TableCell>{title}</TableCell>
-                  <TableCell>
+                  <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
                     {canBeBorrowed ? (
-                      "Can be borrowed"
+                      "Available"
                     ) : (
                       <span>
                         <b>Borrowed</b> until{" "}
@@ -108,41 +151,8 @@ export function Home() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell size="small">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={function () {
-                        handleWithSnackbar(
-                          borrowBook(user, { title }),
-                          reloadBooks,
-                        )
-                      }}
-                      style={{ opacity: user && canBeBorrowed ? 1 : 0 }}
-                    >
-                      Borrow
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={function () {
-                        handleWithSnackbar(
-                          endBookBorrow(user, { title }),
-                          reloadBooks,
-                        )
-                      }}
-                      style={{
-                        opacity:
-                          user &&
-                          !canBeBorrowed &&
-                          (userAPIAccessLevels.librarian & user.access_mask) ==
-                            userAPIAccessLevels.librarian
-                            ? 1
-                            : 0,
-                      }}
-                    >
-                      Cancel Borrow
-                    </Button>
+                  <TableCell style={{ width: 1, whiteSpace: "nowrap" }}>
+                    {buttons}
                   </TableCell>
                 </TableRow>
               )
