@@ -17,6 +17,6 @@ structout::generate!(
         pub title: String,
     } => {
         Book => [attr(#[derive(Serialize, Debug)])],
-        BookByTitlePayload => [omit(id), attr(#[derive(Serialize, Debug)])]
+        GetBookByTitlePayload => [omit(id), attr(#[derive(Serialize, Debug)])]
     }
 );

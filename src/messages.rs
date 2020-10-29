@@ -1,10 +1,7 @@
-use crate::entities::{Book, BookByTitlePayload};
+use crate::entities::{Book, GetBookByTitlePayload};
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
 use std::fmt::Debug;
-
-pub static mut BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookByTitleMsg>>>> =
-    OnceCell::new();
 
 #[derive(strum_macros::AsRefStr, strum_macros::ToString)]
 pub enum ActorGroups {
@@ -22,4 +19,10 @@ macro_rules! define_message {
         }
     };
 }
-define_message!(BookByTitleMsg, Option<Book>, BookByTitlePayload);
+define_message!(GetBookByTitleMsg, Option<Book>, GetBookByTitlePayload);
+pub enum BookMsg {
+    GetByTitle(GetBookByTitleMsg),
+}
+
+pub static mut BOOK: OnceCell<&'static RwLock<Option<crossbeam_channel::Sender<BookMsg>>>> =
+    OnceCell::new();

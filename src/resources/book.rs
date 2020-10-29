@@ -1,5 +1,5 @@
-use crate::entities::{Book, BookByTitlePayload, ServerState};
-use crate::messages::{ActorGroups, BookByTitleMsg, BOOK};
+use crate::entities::{Book, GetBookByTitlePayload, ServerState};
+use crate::messages::{ActorGroups, BookMsg, BookMsg::*, GetBookByTitleMsg, BOOK};
 use crate::resources::respond_with;
 use bastion::prelude::*;
 use sqlx::{PgPool, Row};
@@ -23,7 +23,7 @@ pub async fn fetch_one_by_title(pool: &PgPool, title: &str) -> Result<Option<Boo
 }
 
 pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
-    let payload = BookByTitlePayload {
+    let payload = GetBookByTitlePayload {
         title: req.param("title").unwrap(),
     };
     let (reply, r) = crossbeam_channel::bounded::<Option<Book>>(1);
@@ -35,11 +35,11 @@ pub async fn get(req: Request<ServerState>) -> tide::Result<Response> {
             .read()
             .as_ref()
             .unwrap()
-            .send(BookByTitleMsg {
+            .send(GetByTitle(GetBookByTitleMsg {
                 reply,
                 payload,
                 db_pool: state.global.db_pool,
-            })
+            }))
             .unwrap();
     }
 
@@ -61,7 +61,7 @@ pub fn actor(children: Children) -> Children {
     children
         .with_name(ActorGroups::Book.as_ref())
         .with_exec(move |_| async move {
-            let (channel, r) = crossbeam_channel::unbounded::<BookByTitleMsg>();
+            let (channel, r) = crossbeam_channel::unbounded::<BookMsg>();
             unsafe {
                 let mut lock = BOOK.get().unwrap().write();
                 *lock = Some(channel);
@@ -69,19 +69,23 @@ pub fn actor(children: Children) -> Children {
             println!("Book actor is ready!");
 
             loop {
-                let BookByTitleMsg {
-                    reply,
-                    payload,
-                    db_pool,
-                } = r.recv().unwrap();
-
-                let _ = reply.send(match fetch_one_by_title(db_pool, &payload.title).await {
-                    Ok(output) => output,
-                    err => {
-                        println!("{:#?}", err);
-                        None
+                match r.recv().unwrap() {
+                    GetByTitle(GetBookByTitleMsg {
+                        reply,
+                        payload,
+                        db_pool,
+                    }) => {
+                        let _ =
+                            reply.send(match fetch_one_by_title(db_pool, &payload.title).await {
+                                Ok(output) => output,
+                                err => {
+                                    // TODO: implement logging
+                                    println!("{:#?}", err);
+                                    None
+                                }
+                            });
                     }
-                });
+                }
             }
 
             #[allow(unreachable_code)]
