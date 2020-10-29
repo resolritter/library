@@ -2738,6 +2738,8 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "structout"
 version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a62d58141f0185f4b8a8e2581b32446983487108aeb74a7f97436f70d4e31c3"
 dependencies = [
  "linked_hash_set",
  "proc-macro2",
