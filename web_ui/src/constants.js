@@ -20,6 +20,9 @@ export const apiEndpoints = {
 }
 
 export const routes = {
+  home: function () {
+    return "/"
+  },
   login: function () {
     return "/login"
   },

@@ -3,6 +3,7 @@ import { routerMiddleware } from "connected-react-router"
 import { connectRouter } from "connected-react-router"
 import { createBrowserHistory } from "history"
 
+import book from "./book"
 import user from "./user"
 
 export default function (preloadedState) {
@@ -13,6 +14,7 @@ export default function (preloadedState) {
   const store = configureStore({
     reducer: {
       user: user.reducer,
+      book: book.reducer,
       router: connectRouter(history),
     },
     middleware,

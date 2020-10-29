@@ -4,6 +4,7 @@ import MainAppBar from "src/components/MainAppBar"
 import { routes } from "src/constants"
 import CreateUser from "src/containers/CreateUser"
 import FullPageLayout from "src/containers/FullPageLayout"
+import Home from "src/containers/Home"
 import Login from "src/containers/Login"
 
 export const ConnectedApp = function () {
@@ -11,6 +12,7 @@ export const ConnectedApp = function () {
     <FullPageLayout>
       <MainAppBar />
       <Switch>
+        <Route exact path={routes.home()} component={Home} />
         <Route exact path={routes.login()} component={Login} />
         <Route exact path={routes.createUser()} component={CreateUser} />
         <Route
