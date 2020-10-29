@@ -64,7 +64,7 @@ while [[ "$#" -gt 0 ]]; do
       get_available_port sync
       exit $?
     ;;
-    delete_port)
+    free_port)
       mc_delete "port_taken_$2"
       exit $?
     ;;

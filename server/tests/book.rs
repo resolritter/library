@@ -18,7 +18,7 @@ async fn test_create_and_get() {
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     let (_, normal_user) = user::create(
@@ -67,16 +67,14 @@ async fn test_create_and_get() {
 
 #[async_std::test]
 async fn test_borrow() {
-    use entities::{
-        book, user, BookBorrowByTitlePayload, BookCreatePayload, UserCreatePayload,
-    };
+    use entities::{book, user, BookBorrowByTitlePayload, BookCreatePayload, UserCreatePayload};
 
     let test_name = format_test_name(function_name!());
     let tmp_dir = TempDir::new(&test_name).unwrap();
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
@@ -140,7 +138,7 @@ async fn test_end_borrow() {
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     const WHOLE_DAY: i64 = 86400;
@@ -234,7 +232,7 @@ async fn test_list() {
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     let (_, book) = book::create(

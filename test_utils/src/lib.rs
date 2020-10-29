@@ -4,7 +4,7 @@ pub mod path;
 pub mod port;
 
 use crate::path::executable_path;
-use crate::port::get_free_port;
+use crate::port::{get_free_port, Port};
 use async_process::Command;
 use notify::{raw_watcher, RecursiveMode, Watcher};
 use std::fs::File;
@@ -15,7 +15,8 @@ use tempdir::TempDir;
 pub struct SpawnedTest {
     pub log_dir: PathBuf,
     pub server_addr: String,
-    pub process: async_process::Child,
+    process: async_process::Child,
+    app_port: Port,
 }
 
 impl Drop for SpawnedTest {
@@ -27,6 +28,14 @@ impl Drop for SpawnedTest {
         std::process::Command::new("bash")
             .arg("-c")
             .arg(proc_kill_cmd)
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+        std::process::Command::new(executable_path())
+            .arg("free_port")
+            .arg(format!("{}", &self.app_port))
+            .stdout(std::process::Stdio::null())
             .spawn()
             .unwrap()
             .wait()
@@ -93,6 +102,7 @@ pub fn spawn_test_program(
         server_addr,
         log_dir,
         process,
+        app_port,
     }
 }
 

@@ -18,7 +18,7 @@ async fn test_create_user_and_login() {
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, None);
 
     // Fail a login with a user which does _not_ exist
@@ -64,7 +64,7 @@ async fn test_create_user() {
     let SpawnedTest {
         server_addr,
         log_dir,
-        process: _,
+        ..
     } = &spawn_test_program(&tmp_dir, Some((ADMIN_EMAIL, ADMIN_ACCESS_TOKEN)));
 
     user::create(
