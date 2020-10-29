@@ -1,0 +1,11 @@
+[package]
+name = "library_management"
+version = "0.1.0"
+authors = ["resolritter <joao.paulo.silvasouza@hotmail.com>"]
+edition = "2018"
+
+[dependencies]
+sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "runtime-async-std", "postgres" ]}
+bastion = "0.4"
+strum = "0.19"
+strum_macros = "0.19"
