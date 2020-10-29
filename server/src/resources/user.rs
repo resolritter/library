@@ -82,7 +82,7 @@ actor_response_handler::generate!({
 #[inline(always)]
 pub async fn create_user(msg: &UserCreationMsg) -> Result<ResponseData<User>, sqlx::Error> {
     let is_authorized = match &msg.payload.requester_access_token {
-        Some(token) => check_access_mask(token, msg.payload.access_mask, msg.db_pool).await?,
+        Some(token) => check_access_mask(token, access_mask::ADMIN, msg.db_pool).await?,
         None => msg.payload.access_mask == access_mask::USER,
     };
     if !is_authorized {
