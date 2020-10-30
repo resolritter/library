@@ -45,10 +45,10 @@ will be later described in the [Missing for production](#missing-for-production)
 
 # Why "Library"   <a name="why-library"></a>
 
-The project is named "Library" because it implements a very basic library system, i.e. based around books
-and the idea of borrowing and returning it. This theme allows for a primitive/comprehensible enough implementation
-which wouldn't take too much away from the the project's main intent, afterall the domain-specific details
-are merely ways to showcase the architecture and technology.
+The project is named "Library" because its implementation entails a basic library system, i.e. a system based around
+books as a core entity and the activity of borrowing and returning it. This theme allows for a primitive/comprehensible
+enough implementation which wouldn't take too much away from the the project's
+main intent, afterall the domain-specific details are merely ways to showcase the architecture and technology.
 
 ## 2.1 User-facing server features <a name="product-features"></a>
 
@@ -140,15 +140,13 @@ Comparatively, Tide is younger and less "solved" than others (for instance, many
 
 A good duo for plain ol' SQL without ORM cumbersomeness. Have **refinery** handle [migrations](https://github.com/resolritter/library/blob/master/server/src/migrations) and **sqlx** [queries](https://github.com/resolritter/library/blob/c362ad10167740bffacd09bccf275353087ce162/server/src/resources/book.rs#L218) both expressed directly in SQL feels much more predictable and productive.
 
-## Server tests - [insta](https://github.com/mitsuhiko/insta) + [flexi_logger](https://github.com/emabee/flexi_logger)
+## Server test snapshotting - [insta](https://github.com/mitsuhiko/insta) + [flexi_logger](https://github.com/emabee/flexi_logger)
 
-Testing is based in first logging through **flexi_logger**, then snapshotting the logs with **insta**.
-
-It works like you would expect from an integration test suite: build and host the API, then send it requests.
+Testing is based in logging through **flexi_logger**, then snapshotting the logs with **insta** (see the [snapshots directory](https://github.com/resolritter/library/tree/master/server/tests/snapshots)).
 
 ## Web UI - [React](https://reactjs.org/docs/getting-started.html) + [Redux](https://react-redux.js.org/)
 
-The UI is implemented in React + Redux for no other reason other than me being comfortable with it ([as my other projects show](https://github.com/resolritter/resolritter/blob/master/readme.md), but also my professional experience). Initially I was looking at [Seed](https://github.com/seed-rs/seed-quickstart) which seems fine, but comparatively not as productive of a choice due to my front-end experience.
+The UI is implemented in React + Redux due to my comfort with them ([as my other projects show](https://github.com/resolritter/resolritter/blob/master/readme.md), but also my professional experience). [Seed](https://github.com/seed-rs/seed-quickstart) was considered initially and seems fine, but comparatively not as productive of a choice due to my front-end experience with other technologies.
 
 ## Web UI tests - [Cypress](https://www.cypress.io/)
 
@@ -168,7 +166,7 @@ Requires the database to be up. Run through either `run.sh` or `cd server && car
 
 ### Server integration tests <a name="server-integration-tests"></a>
 
-By virtue of the testing infrastructure leveraging lots of Unix-specific programs, it's assumed the setup as is, likewise, only works on Linux. The used executables should already be available in it:
+By virtue of the testing infrastructure leveraging lots of Unix-specific programs, it's assumed that the setup, as is, likewise, only works on Linux. The used executables should already be available in your distribution:
 
 ```
 bash
@@ -204,29 +202,27 @@ Needs every dependency mentioned in [Server integration tests](#server-integrati
 
 # How it works
 
-A high-level tour of how everything comes together.
-
 ## Nomenclature <a name="nomenclature"></a>
 
-Entity is conceptualized as what you would expect from a DB entity in the traditional sense ([source](https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model)). For this implementation, entities map 1-to-1 with actors, i.e. the Book *actor* handles all messages related to the Book *entity*.
+Entity refers to an entity in traditional sense ([source](https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model)). For this implementation, entities map 1-to-1 with actors, i.e. the Book *actor* handles all messages related to the Book *entity*.
 
-Resource simply is the entity (which is the data representation) as a "controller" (which offers API functionality for a certain entity); the name for such concept was popularized by the [Rails](https://guides.rubyonrails.org/routing.html#resource-routing-the-rails-default) framework.
+Resource simply is the entity (which is the data representation) as a "controller" (which offers API functionality for a certain entity); the concept was popularized by the [Rails](https://guides.rubyonrails.org/routing.html#resource-routing-the-rails-default) framework.
 
 ## entities <a name="entities-crate"></a>
 
-The most basic and decoupled crate which primarily hosts the data-centric aspects of the application ([source](https://github.com/resolritter/library/blob/master/entities/src/data.rs)), hence the name "entities". The structures follow a naming pattern which is enforced by the macros, as it'll be told in the following sections.
+A crate which primarily hosts the data-centric aspects of the application, hence the name "entities". The structures' ([source](https://github.com/resolritter/library/blob/master/entities/src/data.rs)) names follow a pattern dictated by the macros, as it'll be shown in the following sections.
 
 ## actor_msg_resources <a name="actor_msg_resources"></a>
 
 The **actor_msg_resources** ([source](https://github.com/resolritter/library/blob/c7214bd8e32d39a025538be6f81ff574ef6eb296/actor_msg_resources/src/lib.rs#L108) and [usage](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11)) macro has the following roles
 
-1. Wrap messages in a default structure for all actors across the system.
+1. Wrap messages in a default structure which carries useful values along with the message's content (for instance, a reference to the database pool).
 
 2. Generate enum wrappers for the all message types.
 
-3. Define an OnceCell which is named after the actor's name capitalized (e.g. `Book` would turn into `BOOK`). This cell will be later initialized with an empty RwLock when the app starts ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/main.rs#L174)). Its lock will be filled with a channel to the specific actor when it is spawned ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L118)). <a name="once-cell-mention"></a>
+3. Define a `OnceCell` named after the actor's name capitalized (e.g. `BOOK` for the Book actor). This cell will be initialized to an empty RwLock when the app is set up ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/main.rs#L174)) and later replaced with a channel to the actors when they're spawned ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L118)). <a name="once-cell-mention"></a>
 
-Relevantly, this macro enforces a predictable naming convention for messages. For instance, the following
+By virtue of code generation, this macro enforces a predictable naming convention for messages. For instance, the following
 
 `actor_msg_resources::generate!(User, [(Login, User)])`
 
@@ -262,9 +258,14 @@ Now that the messages' structures have been taken care of, the HTTP endpoints ca
 
 ## actor_request_handler <a name="actor_request_handler"></a>
 
-The **actor_response_handler** macro ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/actor_response_handler/src/lib.rs#L116)) expands to a function with steps you would have to take to parse a request into a message. Its expansion should be straightforward enough to read.
+The **actor_response_handler** macro ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/actor_response_handler/src/lib.rs#L116)) expands to a function which handles
 
-The parser function's name is set by convention. For a macro
+1. Parsing a request into a message
+2. Sending the message to its designated actor
+3. Wait for the reply message
+4. Mount the response body and return it
+
+The parser function's name is dictated by convention. For a macro
 
 ```
 actor_request_handler::generate!({
@@ -281,19 +282,21 @@ The function generated by this macro will be later used as an HTTP endpoint. Now
 
 ## endpoint_actor <a name="endpoint_actor"></a>
 
-Bastion's API for spawning actors is like the following
+Given that Bastion's API for spawning actors is
 
 ```
-    children
-        .with_exec(move |ctx: BastionContext| async move {
+children
+    .with_exec(move |ctx: BastionContext| async move {
         // actor code
-        })
+    })
 ```
 
 
-The first setup for any given actor is registering his own channel of communication through a lock which, as mentioned in the [previous section](#once-cell-mention), is globally reachable through an OnceCell (note: reliance on such mechanism does mean that redundancy cannot be achieved using this approach as it currently is implemented). Availability through the OnceCell is done for the sake of making this actor's channel discoverable, always, whenever it comes up (it might crash at some point and [that's fine](#let-it-crash)).
+The first setup for any given actor will be registering his own channel of communication through a lock which, as mentioned in the [previous section](#once-cell-mention), is globally reachable through a `OnceCell` (note: reliance on such mechanism means that redundancy cannot be achieved using this approach **as it currently is implemented**, although it technically is possible). Availability through the `OnceCell` is done for the sake of making this actor's channel discoverable, always, whenever it comes up (it might crash at some point and [that's fine](#let-it-crash)).
 
-**endpoint_actor** expands to the [repetitive code](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L124) you'd normally have to write by hand, which is unwrapping the enums and forwarding the payload ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L97)) to the function which does whatever you want with the payload + the messages' embellished data (as shown in [actor_msg_resources](#actor_msg_resources), in this app's case it's the database pool, but it could be anything else you wanted).
+**endpoint_actor** expands to the [repetitive code](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L124) you'd normally have to write by hand, which is unwrapping the enums and forwarding the payload ([source](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/endpoint_actor/src/lib.rs#L97)) to the function which will process it.
+
+As an example
 
 ```
 endpoint_actor::generate!({ actor: User }, {
@@ -304,16 +307,17 @@ endpoint_actor::generate!({ actor: User }, {
 Specified as
 
 ```
-endpoint_actor::generate!({ actor: User }, {
+endpoint_actor::generate!({ actor: #ACTOR }, {
     #MESSAGE_VARIANT: #MESSAGE_HANDLER,
+    ...
 });
 ```
 
-This macro defines the actor which indirectly, through message-passing, has handled the HTTP request and will send the response back. Now we should have everything needed for serving a response.
+The expansion defines an actor which will handle the HTTP requests parsed in [request handlers](#actor_request_handler). Now we should have everything needed for serving a response.
 
 ## Recap - Putting it all together <a name="recap"></a>
 
-In general, if you were to expand the API, those would be the steps
+In case you wanted to expand the API with a new endpoint, the following steps would be taken
 
 1. Edit the [messages](https://github.com/resolritter/library/blob/2920b06de3762f3a083d99498596d48f0ad3ea83/server/src/messages.rs#L11) module where you'll either add another `(#MESSAGE_VARIANT, #REPLY)` tuple to one of the existing actor definitions or create a new one.
 
@@ -340,14 +344,14 @@ actor_msg_resources::generate!(
 4. Define a new request handler with [actor_request_handler](#actor_request_handler)
 
 ```diff
-+ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreationPayload> {
++ async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreatePayload> {
 +    // extract the payload
 + }
 + actor_request_handler::generate!(Config {
 +    name: post,
 +    actor: Book,
 +    response_type: Book,
-+    tag: Creation
++    tag: Create
 + });
 ```
 
@@ -356,7 +360,7 @@ Notice the convention between `name: post` and `extract_post`.
 5. Define a new message handler in the body of [endpoint_actor](#endpoint_actor)
 
 ```diff
-+ pub async fn create(msg: &BookCreationMsg) -> Result<ResponseData<Book>, sqlx::Error> {
++ pub async fn create(msg: &BookCreateMsg) -> Result<ResponseData<Book>, sqlx::Error> {
 +     // create the book
 + }
 
@@ -371,9 +375,9 @@ endpoint_actor::generate!({ actor: Book }, {
 6. Create the route
 
 ```diff
-+            server
-+                .at(format!(book_route!(), ":title").as_str())
-+                .post(resources::book::post);
++ server
++     .at(format!(book_route!(), ":title").as_str())
++     .post(resources::book::post);
 ```
 
 ## Finally, start the app <a name="start"></a>
@@ -385,9 +389,9 @@ endpoint_actor::generate!({ actor: Book }, {
 
 ## Appendix - Advantagens of actor systems <a name="advantages-of-actor-systems"></a>
 
-There are many resources online advocating for actor systems, but I hadn't heard those viewpoints before working in this project
-
-- **Decoupling**: the actor model encourages one to model around simple structures which can easily be sent across threads, as opposed to massive objects which host a lot of context and might hold dependencies to non-thread-safe elements.
+There are many resources describing the advantages of actor models (e.g. the [Akka guide](https://doc.akka.io/docs/akka/current/typed/guide/introduction.html) goes in-depth on the whole topic), but I hadn't heard of the following highlights before working in this project
+  
+- **Message-first**: the actor model encourages one to model around simple plain old structures which can be sent easily across threads, as opposed to massive objects which host a lot of context and might hold dependencies to non-thread-safe elements.
 - **Logging**: since execution is driven through messages, it's extremely easy to catpure the flow of execution at the message handler instead of remebering to add custom log directives at arbitrary points in the code.
 - **Inspectable**: even if a component suddenly breaks before it's replied to, the lingering message will still likely offer some insight given that execution is driven by the data within them, instead of being arbitrarily spread through the execution of the main thread, which is liable to failure.
 
@@ -397,11 +401,11 @@ Resilience is the main selling point for wanting to model your application like 
 
 # How testing is done <a name="how-testing-is-done"></a>
 
-The [Server integration tests](#server-integration-tests) had a list of all the Linux utilities needed. How does it all come together?
+The [Server integration tests](#server-integration-tests) section had a list of all the Linux utilities needed. How does it all come together?
 
 It starts from the Bash script, `run.sh`. A command may have dependencies ([example](https://github.com/resolritter/library/blob/53d7c0bf9aa5ba5f521dc7fb3ce9ecde2dcf6646/run.sh#L97)); for instance, when logging is enabled, the logging folder has to be created before the program is run - that's just how the libraries work. The Bash script therefore serves as a wrapper and general way to configure and set up all the programs it can run.
 
-Integration tests need both a clean database and a fresh server instance in order to run. Accordingly, both need open ports to bind to, which is where `ss` comes in handy for figuring out which ports are currently in use.
+Integration tests need both a clean database and a fresh server instance in order to run; accordingly, both need processes need open ports to bind to, which is where `ss` comes in handy for figuring out which ports are currently in use.
 
 For the database, a dockerized PostgreSQL instance is spawned especifically for tests with `run.sh test_db`. It's useful to have this dedicated container in order to avoid accumulating test databases in the actual work instance, plus it also means that the volume can be completely discarded when the container is finished. The port being used will be written to `$TEST_DB_PORT_FILE`, a file which will be automatically read when the tests are ran. The databases used for integration tests will, therefore, all be created in this specific container.
 
@@ -414,20 +418,21 @@ Finally, when the tests need to be teared down, that's when the other utilities 
 # Missing for production <a name="missing-for-production"></a>
 
 This project doesn't aim to show much of what would be needed to have in a real-world application.
-That being said, *if it were*, some things would obviously be missing, so they'll be listed here
+That being said, *if it were*, some things would obviously be missing, so they'll be listed here.
 
 ## Completeness requirements
 
 - Authentication does not include password, which would not work.
 - Title is used as primary key for books, but of course this wouldn't be acceptable normally.
 - Books can only be lent for a full week, but the timeline could be customizable.
+- Books are automatically considered available when their lease time expires, thus the current system doesn't account for lateness.
 
 ## Nice-to-have features
 
-- See a user's history of borrowing
-- See a book's history of borrowing
-- Plotted metrics (% of books late, % probability of it being late, etc) in some sort of Admin dashboard
-- Searching and filtering books in the UI
+- See a user's history of borrowing.
+- See a book's history of borrowing.
+- Plotted metrics (% of books late, % probability of it being late, etc) in some sort of Admin dashboard.
+- Searching and filtering books in the UI.
 
 ## Token refreshing and invalidation
 
@@ -435,18 +440,18 @@ Currently tokens are issued once and don't degrade, ever.
 
 ## Have issued tokens for multiple devices
 
-Currently we have the single `access_token` field in the User entity which wouldn't scale well with multiple devices
+Currently we have the single `access_token` field in the User entity which wouldn't scale well with multiple devices.
 
 ## Uploading logs to the cloud
 
-Currently errors are logged to the file system, but not reported in any manner to some provider in the cloud
+Currently errors are logged to the file system, but not reported in any manner to some provider in the cloud.
 
 ## Other
 
 The following are self-explanatory
 
-- PostgreSQL setup has only been proven to work without password
-- Lacking CI Setup
-- No API specification (e.g. Swagger)
-- No verification of the user profile's payload as received from the backend
-- Cached profile information in the front-end is never invalidated or degraded
+- PostgreSQL setup has only been proven to work without password.
+- Lacking CI Setup.
+- No API specification (e.g. Swagger).
+- No verification of the user profile's payload as received from the backend.
+- Cached profile information in the front-end is never invalidated or degraded.
