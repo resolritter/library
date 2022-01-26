@@ -35,13 +35,14 @@ impl Parse for Message {
     fn parse(input: ParseStream) -> Result<Self> {
         let content;
         parenthesized!(content in input);
-        for parsed in content.parse_terminated::<MessageInner, token::Comma>(MessageInner::parse)? {
-            return Ok(Message {
-                name: parsed.name,
-                reply: parsed.reply,
-            });
-        }
-        unreachable!();
+        let parsed = content.parse_terminated::<MessageInner, token::Comma>(
+            MessageInner::parse,
+        )?;
+        let parsed = parsed.into_iter().next().unwrap();
+        Ok(Message {
+            name: parsed.name,
+            reply: parsed.reply,
+        })
     }
 }
 
@@ -74,8 +75,10 @@ pub fn generate(input: TokenStream) -> TokenStream {
     } = parse_macro_input!(input as Configuration);
 
     let actor_name = resource.to_string();
-    let actor_lock = Ident::new(&actor_name.to_ascii_uppercase(), Span::call_site());
-    let actor_msg = Ident::new(format!("{}Msg", actor_name).as_str(), Span::call_site());
+    let actor_lock =
+        Ident::new(&actor_name.to_ascii_uppercase(), Span::call_site());
+    let actor_msg =
+        Ident::new(format!("{}Msg", actor_name).as_str(), Span::call_site());
 
     let msg_structs = messages.iter().map(|m| {
         let name_str = m.name.to_string();

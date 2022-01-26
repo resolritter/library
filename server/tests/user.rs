@@ -22,7 +22,7 @@ async fn test_create_user_and_login() {
 
     // Fail a login with a user which does _not_ exist
     let bad_request_nonexistent_user = user::do_login(
-        &server_addr,
+        server_addr,
         &UserLoginPayload {
             email: "DOES_NOT_EXIST@user.com".to_string(),
         },
@@ -32,7 +32,7 @@ async fn test_create_user_and_login() {
 
     // Creates a simple user
     let (_, user) = user::create(
-        &server_addr,
+        server_addr,
         &UserCreatePayload {
             email: "simple@user.com".to_string(),
             access_mask: access_mask::USER,
@@ -43,7 +43,7 @@ async fn test_create_user_and_login() {
 
     // Logs in with the created user
     let (_, same_user) = user::login(
-        &server_addr,
+        server_addr,
         &UserLoginPayload {
             email: user.email.to_string(),
         },
@@ -51,7 +51,7 @@ async fn test_create_user_and_login() {
     .await;
     assert!(user.email == same_user.email);
 
-    assert_snapshot!(read_snapshot(&log_dir));
+    assert_snapshot!(read_snapshot(log_dir));
 }
 
 #[async_std::test]
@@ -67,7 +67,7 @@ async fn test_create_user() {
     } = &spawn_test_program(&tmp_dir);
 
     user::create(
-        &server_addr,
+        server_addr,
         &UserCreatePayload {
             email: "librarian@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
@@ -77,7 +77,7 @@ async fn test_create_user() {
     )
     .await;
     let (_, simple_user) = user::create(
-        &server_addr,
+        server_addr,
         &UserCreatePayload {
             email: "simple@user.com".to_string(),
             access_mask: access_mask::USER,
@@ -89,7 +89,7 @@ async fn test_create_user() {
 
     // Normal users should not be able to create any sort of special user
     let bad_forbidden_request_admin = user::do_create(
-        &server_addr,
+        server_addr,
         &UserCreatePayload {
             email: "new_ADMIN@user.com".to_string(),
             access_mask: access_mask::ADMIN,
@@ -99,7 +99,7 @@ async fn test_create_user() {
     .await;
     assert!(bad_forbidden_request_admin.status() == StatusCode::Forbidden);
     let bad_forbidden_request_librarian = user::do_create(
-        &server_addr,
+        server_addr,
         &UserCreatePayload {
             email: "new_LIBRARIAN@user.com".to_string(),
             access_mask: access_mask::LIBRARIAN,
@@ -109,5 +109,5 @@ async fn test_create_user() {
     .await;
     assert!(bad_forbidden_request_librarian.status() == StatusCode::Forbidden);
 
-    assert_snapshot!(read_snapshot(&log_dir));
+    assert_snapshot!(read_snapshot(log_dir));
 }

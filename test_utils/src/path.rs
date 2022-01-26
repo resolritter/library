@@ -20,9 +20,5 @@ pub fn root_path() -> PathBuf {
 }
 
 pub fn executable_path() -> String {
-    format!("{}", root_path().join("run.sh").display())
-}
-
-pub fn tests_lock_path() -> String {
-    format!("{}", root_path().join("server/tests/.tests.lock").display())
+    format!("{}", root_path().join("run").display())
 }

@@ -1,0 +1,234 @@
+#!/bin/env bash
+
+set -eu -o pipefail
+
+root_dir="$(dirname $(realpath "$0"))"
+
+data_dir="$root_dir/data"
+if [ ! -e "$data_dir" ]; then
+  mkdir "$data_dir"
+fi
+
+ports_lock_file="$data_dir/ports_lock_file"
+ports_register_file="$data_dir/ports_register_file"
+
+register_taken_port() {
+  local port=$1
+
+  local ports_register_file_escaped
+  printf -v ports_register_file_escaped %q "$ports_register_file"
+
+  was_port_registered=$(flock "$ports_lock_file" -c "
+    if [ -e $ports_register_file_escaped ]; then
+      while IFS= read -r line; do
+        if [ \$line -eq $port ]; then
+          exit
+        fi
+      done < $ports_register_file_escaped
+    fi
+
+    echo $port > $ports_register_file_escaped
+    echo true
+  ")
+
+  if [ "$was_port_registered" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
+unregister_taken_port() {
+  local port="$1"
+
+  if [ "$port" = all ]; then
+    if [ -e "$ports_register_file" ]; then
+      rm "$ports_register_file"
+    fi
+    return
+  fi
+
+  local ports_register_file_escaped
+  printf -v ports_register_file_escaped %q "$ports_register_file"
+
+  flock "$ports_lock_file" -c "
+    if [ -e $ports_register_file_escaped ]; then
+      while IFS= read -r line; do
+        if [ \$line -eq $port ]; then
+          continue
+        fi
+        echo \$line
+      done < $ports_register_file_escaped
+    fi
+  " > "$ports_register_file"
+}
+
+get_available_port () {
+  read -r lowest highest < /proc/sys/net/ipv4/ip_local_port_range
+  local taken_ports=($(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }'))
+
+  while [ $lowest -le $highest ]; do
+    for tp in "${taken_ports[@]}"; do
+      if [ $lowest -eq $tp ]; then
+        ((lowest++))
+        continue 2
+      fi
+    done
+
+    if register_taken_port $lowest; then
+      echo "$lowest"
+      break
+    fi
+
+    ((lowest++))
+  done
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    # options
+    --db-port) app_db_port=$2; shift ;;
+    --instance) app_instance="$2"; shift ;;
+    --dir) app_dir="$2"; shift;;
+    --port) app_port="$2"; shift;;
+    # forwarded arguments
+    --listen|--admin-credentials-for-test|--signal-file)
+      printf -v arg_escaped %q "$2"
+      run_server_extra_args="${run_server_extra_args:-} $1=$arg_escaped"
+      shift
+    ;;
+    --reset-before-run)
+      run_server_extra_args="${run_server_extra_args:-} $1"
+    ;;
+    # commands
+    get_port)
+      get_available_port
+      exit $?
+    ;;
+    free_port)
+      unregister_taken_port $2
+      exit $?
+    ;;
+    test|test_server|server|db|integration_tests) cmd="$1";;
+    # fallthrough
+    *) echo "Unknown parameter: $1"; exit 1 ;;
+  esac
+  shift
+done
+
+if [ ! "${cmd:-}" ]; then
+  2>&1 echo "ERROR: No command was specified"
+  exit 1
+fi
+
+apps_dir="$data_dir/apps"
+if [ ! -e "$apps_dir" ]; then
+  mkdir "$apps_dir"
+fi
+
+app_instance="${app_instance:-library}"
+app_dir="${app_dir:-$apps_dir/$app_instance}"
+app_db_dir="${app_db_dir:-$app_dir/db}"
+log_dir="${log_dir:-$app_dir/log}"
+
+test_db_port_file="$data_dir/test_db_port"
+if [ "$cmd" = "test_server" ]; then
+  if [ ! "${app_db_port:-}" ]; then
+    read -r app_db_port < "$test_db_port_file"
+  fi
+else
+  app_db_port="${app_db_port:-5432}"
+fi
+
+mkdir -m 777 -p "$app_dir"
+logging_deps () {
+  mkdir -m 777 -p "$log_dir"
+}
+db_deps () {
+  mkdir -m 777 -p "$app_db_dir"
+}
+
+run_server () {
+  cd "$root_dir/server"
+  cargo run -- --db-try-limit=1 --db-try-delay=0 --db-url="postgresql://localhost:$app_db_port/$app_instance?user=$USER" $run_server_extra_args
+}
+
+clean_test_server () {
+  unregister_taken_port $app_port
+  if [ -e "$app_dir" ]; then
+    rm -r "$app_dir"
+  fi
+}
+
+cleanup_test_db() {
+  docker-compose rm --force --stop -v
+  if [ -e "$test_db_port_file" ]; then
+    read -r port < "$test_db_port_file"
+    if [ "$port" ]; then
+      unregister_taken_port $port
+    fi
+    rm "$test_db_port_file"
+  fi
+}
+
+cleanup_integration_tests() {
+  set +e
+  if [ "${integration_tests_pipe:-}" ]; then
+    pkill -f -- "$integration_tests_pipe" || :
+  fi
+  cleanup_test_db
+  unregister_taken_port all
+}
+
+case "$cmd" in
+  test_server)
+    trap clean_test_server EXIT HUP INT QUIT TERM
+    printf -v log_dir_escaped %q "$log_dir"
+    run_server_extra_args="--log-dir=$log_dir_escaped --log-format=test $run_server_extra_args"
+    run_server
+  ;;
+  db)
+    db_deps
+    docker-compose run --service-ports --volume "$app_db_dir:/bitnami/postgresql" db
+  ;;
+  server)
+    run_server
+  ;;
+  integration_tests)
+    cleanup_test_db
+
+    trap cleanup_integration_tests EXIT HUP INT QUIT TERM
+
+    integration_tests_pipe="$data_dir/integration_tests_pipe"
+    if [ -e "$integration_tests_pipe" ]; then
+      pkill -f -- "$integration_tests_pipe" || :
+    else
+      mkfifo "$integration_tests_pipe"
+    fi
+
+    get_available_port > "$test_db_port_file"
+    read -r app_db_port < "$test_db_port_file"
+
+    echo "Starting the test database at $app_db_port"
+    export APP_DB_PORT="$app_db_port"
+    2>&1 docker-compose up --force-recreate --renew-anon-volumes db | while IFS= read -r line; do
+      if [[ "$line" == *"database system is ready to accept connections" ]]; then
+        echo "ready" > "$integration_tests_pipe"
+      fi
+    done &
+    unset APP_DB_PORT
+
+    cat "$integration_tests_pipe" >/dev/null
+    if [ $? -ne 0 ]; then
+      exit $?
+    fi
+
+    # --test '*' means only run the integration tests: https://github.com/rust-lang/cargo/issues/8396#issuecomment-713126649
+    echo "Starting the integration tests"
+    cargo test --quiet --test '*'
+  ;;
+  *)
+    2>&1 echo "ERROR: Unrecognized command $cmd"
+    exit 1
+  ;;
+esac

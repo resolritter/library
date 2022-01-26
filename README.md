@@ -215,15 +215,17 @@ set up already, then Docker is not needed - in that case it'll just use your
 existing service instance.
 
 Otherwise, the Docker setup requires `docker-compose` and can be ran with
-`run.sh db`.
+`run db`.
 
 ### Server
 
 Requires the database to be up.
 
-Run through either `run.sh` or `cd server && cargo run`.
+Start it with `run server`.
 
 ### Server integration tests <a name="server-integration-tests"></a>
+
+Run them with `run integration_tests`.
 
 By virtue of the testing infrastructure leveraging lots of Unix-specific
 programs, it's assumed that the setup, as is, likewise, only works on Linux.
@@ -236,28 +238,14 @@ awk
 head
 tail
 kill
+pkill
 flock
-nc
 ss
 ```
 
-Additionally `docker-compose` and `memcached` should be installed for,
-respectively, spawning instances and coordinating resources between them. Their
-purpose is explained in [How testing is done](#how-testing-is-done).
-
-Once everything is set up, run
-
-1. Spawn the test database
-
-`./run_sh test_db`
-
-2. Run the memcached daemon
-
-`memcached -d`
-
-3. Run cargo test
-
-`cargo test`
+Additionally `docker-compose`  should be installed for spawning test instances
+and coordinating resources between them. Their purpose is explained in [How
+testing is done](#how-testing-is-done).
 
 ### Web UI integration tests
 
@@ -537,7 +525,7 @@ around unexpected failures at runtime.
 The [Server integration tests](#server-integration-tests) section had a list of
 all the Linux utilities needed. How does it all come together?
 
-It starts from the Bash script, `run.sh`. A command may have dependencies
+It starts from the Bash script, `run`. A command may have dependencies
 ([example](https://github.com/resolritter/library/blob/53d7c0bf9aa5ba5f521dc7fb3ce9ecde2dcf6646/run.sh#L97));
 for instance, when logging is enabled, the logging folder has to be created
 before the program is run. The Bash script therefore serves as a wrapper and
@@ -549,32 +537,17 @@ which is where `ss` comes in handy for figuring out which ports are currently
 in use.
 
 For the database, a dockerized PostgreSQL instance is spawned especifically for
-tests with `run.sh test_db`. It's useful to have this dedicated container in
+tests with `run test_db`. It's useful to have this dedicated container in
 order to avoid accumulating test databases in the actual work instance, plus it
 also means that the volume can be completely discarded when the container is
 finished. The port being used will be written to `$TEST_DB_PORT_FILE`, a file
 which will be automatically read when the tests are ran. The databases used for
 integration tests will, therefore, all be created in this specific container.
 
-`memcached` plays a part in coordinating resource acquisition between tests.
-Since all tests are ran in parallel, some test might want to spin up the server
-in a port which would be taken by another, thus making them conflict and fail.
-Synchronizing the reads (is the port free?) and writes (I've exclusively
-acquired X port for the test) is done using `memcached` because the disk
-storage is, at least on my PC, not fast enough (another approach could've been
-to write/read the used ports to a file). Note that `ss` does not work here
-since it only lists ports **currently** being used, but due the tests starting
-all at the same through parallel execution, individual instances don't bind
-fast enough for it to be caught by `ss`; a "lock-and-reserve-ahead-of-time"
-mechanism on a in-memory database is, therefore, needed, since it doesn't
-suffer from unpredictable flushing and speed disadvantagens file disk accesses
-have.
-
-Further, for achieving true exclusive read/write synchronization for port
-acquisition, `flock` wraps around `memcached` (`nc` is used for talking to
-`memcached`) so that processes don't try to both write/read at the same time.
-Having synchronized the port acquisition, tests can be independently ran and
-also log in parallel. As already mentioned in the
+For ensuring exclusive system-level resources acquisition, `flock` is used as a
+synchronization tool so that two different test instances do not try to bind to
+the same port. Ensuring exclusive the port acquisition means that tests can be
+independently ran in parallel. As aforementioned in the
 [advantages](advantages-of-actor-systems), it's pretty easy to know exactly
 what's being executed by snapshotting the logs (see the [snapshot
 directory](./server/tests/snapshots)).

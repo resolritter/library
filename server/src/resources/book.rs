@@ -78,7 +78,7 @@ pub async fn end_borrow_by_title(
 async fn extract_end_borrow(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookEndBorrowByTitlePayload> {
-    let access_token = require_auth_token(&req).await?;
+    let access_token = require_auth_token(req).await?;
     match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {
         Ok(title) => Ok(BookEndBorrowByTitlePayload {
             title: title.to_string(),
@@ -170,7 +170,7 @@ pub async fn create(
 }
 #[inline(always)]
 async fn extract_post(req: &mut Request<ServerState>) -> tide::Result<BookCreatePayload> {
-    let access_token = require_auth_token(&req).await?;
+    let access_token = require_auth_token(req).await?;
     let body = req.body_json::<BookCreatePayloadRequestBody>().await?;
 
     Ok(BookCreatePayload {
@@ -230,7 +230,7 @@ pub async fn borrow_by_title(
 async fn extract_borrow_book(
     req: &mut Request<ServerState>,
 ) -> tide::Result<BookBorrowByTitlePayload> {
-    let _ = require_auth_token(&req).await?;
+    let _ = require_auth_token(req).await?;
     let body = req.body_json::<BookBorrowByTitleRequestBody>().await?;
 
     match percent_decode(req.param::<String>("title")?.as_bytes()).decode_utf8() {

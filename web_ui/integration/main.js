@@ -7,7 +7,7 @@ const tempy = require("tempy")
 const { adminCredentials } = require("./constants.json")
 
 const testsLockPath = path.join(__dirname, ".tests.lock")
-const executablePath = path.join(__dirname, "../../run.sh")
+const executablePath = path.join(__dirname, "../../run")
 
 const getFreePort = function () {
   const port = cp
