@@ -209,7 +209,7 @@ case "$cmd" in
     get_available_port > "$test_db_port_file"
     read -r app_db_port < "$test_db_port_file"
 
-    echo "Starting the test database at $app_db_port"
+    echo "Starting the test database at port $app_db_port"
     export APP_DB_PORT="$app_db_port"
     2>&1 docker-compose up --force-recreate --renew-anon-volumes db | while IFS= read -r line; do
       if [[ "$line" == *"database system is ready to accept connections" ]]; then
