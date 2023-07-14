@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 set -Eeu -o pipefail
 shopt -s inherit_errexit
@@ -15,37 +15,33 @@ die() {
 root_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 data_dir="$root_dir/data"
-if [ ! -e "$data_dir" ]; then
-  mkdir "$data_dir"
-fi
+mkdir -p "$data_dir"
 
 ports_lock_file="$data_dir/ports_lock_file"
 ports_register_file="$data_dir/ports_register_file"
 
 register_taken_port() {
-  local port=$1
+  local port="$1"
 
   local ports_register_file_escaped
   printf -v ports_register_file_escaped %q "$ports_register_file"
 
-  was_port_registered=$(flock "$ports_lock_file" -c "
+  local port_escaped
+  printf -v port_escaped %q "$port"
+
+  SHELL=/bin/bash flock "$ports_lock_file" -c "
     if [ -e $ports_register_file_escaped ]; then
       while IFS= read -r line; do
-        if [ \$line -eq $port ]; then
-          exit
+        if [ \$line -eq $port_escaped ]; then
+          exit 1
         fi
       done < $ports_register_file_escaped
     fi
 
-    echo $port > $ports_register_file_escaped
-    echo true
-  ")
-
-  if [ "$was_port_registered" ]; then
-    return 0
-  fi
-
-  return 1
+    if ! echo $port_escaped > $ports_register_file_escaped; then
+      exit 2
+    end
+  "
 }
 
 unregister_taken_port() {
@@ -61,25 +57,30 @@ unregister_taken_port() {
   local ports_register_file_escaped
   printf -v ports_register_file_escaped %q "$ports_register_file"
 
-  flock "$ports_lock_file" -c "
+  local port_escaped
+  printf -v port_escaped %q "$port"
+
+  SHELL=/bin/bash flock "$ports_lock_file" -c "
+    lines=()
     if [ -e $ports_register_file_escaped ]; then
       while IFS= read -r line; do
         if [ \$line -eq $port ]; then
           continue
         fi
-        echo \$line
+        lines+=(\"\$line\")
       done < $ports_register_file_escaped
     fi
-  " > "$ports_register_file"
+    printf '%s\\n' \"\${lines[@]}\" > $ports_register_file_escaped
+  "
 }
 
-get_available_port () {
-  read -r lowest highest < /proc/sys/net/ipv4/ip_local_port_range
+get_available_port() {
   local taken_ports
   readarray -t taken_ports < <(
     ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }'
   )
 
+  read -r lowest highest < /proc/sys/net/ipv4/ip_local_port_range
   while [ "$lowest" -le "$highest" ]; do
     for tp in "${taken_ports[@]}"; do
       if [ "$lowest" -eq "$tp" ]; then
@@ -91,6 +92,8 @@ get_available_port () {
     if register_taken_port "$lowest"; then
       echo "$lowest"
       break
+    elif [ $? -eq 2 ]; then
+      die "failed to persist taken port to the filesystem"
     fi
 
     ((lowest++))
@@ -109,18 +112,22 @@ case "$1" in
   test|test_server|server|db|integration_tests)
     cmd="$1"
   ;;
+  *)
+    die "invalid command $1"
+  ;;
 esac
 
+unset app_db_port app_instance app_dir app_port
 run_server_extra_args=()
 while [ $# -gt 0 ]; do
   case "$1" in
     # options
-    --db-port) app_db_port=$2; shift ;;
+    --db-port) app_db_port="$2"; shift ;;
     --instance) app_instance="$2"; shift ;;
     --dir) app_dir="$2"; shift;;
     --port) app_port="$2"; shift;;
 
-    # forwarded arguments
+    # arguments forwarded to the server
     --listen|--admin-credentials-for-test|--signal-file)
       run_server_extra_args+=("$1=$2")
       shift
@@ -130,45 +137,20 @@ while [ $# -gt 0 ]; do
     ;;
 
     *)
-      die "Unknown option $1"
+      die "unexpected argument $1"
     ;;
   esac
   shift
 done
-
-if [ ! "${cmd:-}" ]; then
-  2>&1 echo "ERROR: No command was specified"
-  exit 1
-fi
-
-apps_dir="$data_dir/apps"
-if [ ! -e "$apps_dir" ]; then
-  mkdir "$apps_dir"
-fi
 
 app_instance="${app_instance:-library}"
 app_dir="${app_dir:-$apps_dir/$app_instance}"
 app_db_dir="${app_db_dir:-$app_dir/db}"
 log_dir="${log_dir:-$app_dir/log}"
 
-test_db_port_file="$data_dir/test_db_port"
-if [ "$cmd" = "test_server" ]; then
-  if [ ! "${app_db_port:-}" ]; then
-    read -r app_db_port < "$test_db_port_file"
-  fi
-else
-  app_db_port="${app_db_port:-5432}"
-fi
-
 mkdir -p "$app_dir"
-logging_deps () {
-  mkdir -p "$log_dir"
-}
-db_deps () {
-  mkdir -p "$app_db_dir"
-}
 
-run_server () {
+start_server() {
   cd "$root_dir/server"
   cargo run -- \
     --db-try-limit=1 \
@@ -177,74 +159,67 @@ run_server () {
     "${run_server_extra_args[@]}"
 }
 
-clean_test_server () {
+clean_test_server() {
   unregister_taken_port "$app_port"
-  if [ -e "$app_dir" ]; then
-    rm -r "$app_dir"
-  fi
+  rm -rf "$app_dir"
 }
 
-cleanup_test_db() {
-  docker-compose rm --force --stop -v
-  if [ -e "$test_db_port_file" ]; then
-    read -r port < "$test_db_port_file"
-    if [ "$port" ]; then
-      unregister_taken_port "$port"
-    fi
-    rm "$test_db_port_file"
-  fi
-}
-
+taken_ports_file="$data_dir/test_db_port"
 cleanup_integration_tests() {
-  set +e
-  if [ "${integration_tests_pipe:-}" ]; then
-    pkill -f -- "$integration_tests_pipe" || :
-  fi
-  cleanup_test_db
+  local exit_code=$?
+  rm -rf "${test_db_dir:-}" "$taken_ports_file"
   unregister_taken_port all
+  pkill -P $$
+  exit "$exit_code"
+}
+
+start_db() {
+  docker run -it --rm \
+    -e ALLOW_EMPTY_PASSWORD=yes \
+    -e "POSTGRESQL_USERNAME=$USER" \
+    "$@" docker.io/bitnami/postgresql:11-debian-10
 }
 
 case "$cmd" in
   test_server)
     trap clean_test_server EXIT
+    mkdir -p "$log_dir"
     run_server_extra_args+=(--log-format=test "--log-dir=$log_dir")
-    run_server
+    start_server
   ;;
   db)
-    db_deps
-    docker-compose run --service-ports --volume "$app_db_dir:/bitnami/postgresql" db
+    mkdir -p "$app_db_dir"
+    start_db -p "$app_db_port:5432" -v "$app_db_dir":/bitnami/postgresql
   ;;
   server)
-    run_server
+    start_server
   ;;
   integration_tests)
-    cleanup_test_db
-
     trap cleanup_integration_tests EXIT
 
-    integration_tests_pipe="$data_dir/integration_tests_pipe"
-    if [ -e "$integration_tests_pipe" ]; then
-      pkill -f -- "$integration_tests_pipe" || :
-    else
-      mkfifo "$integration_tests_pipe"
+    get_available_port > "$taken_ports_file"
+    read -r test_db_port < "$taken_ports_file"
+
+    test_db_dir="$data_dir/test-db-$test_db_port"
+    rm -rf "$test_db_dir"
+    mkdir -p "$test_db_dir"
+
+    unset is_db_ready
+    while IFS= read -r line; do
+      case "$line" in
+        *" database system is ready to accept connections")
+          is_db_ready=true
+          break
+        ;;
+        *)
+          echo "$line"
+        ;;
+      esac
+    done < <(start_db -p "$test_db_port:5432")
+    if [ ! "${is_db_ready:-}" ]; then
+      die "failed to start the databases' server"
     fi
 
-    get_available_port > "$test_db_port_file"
-    read -r app_db_port < "$test_db_port_file"
-
-    echo "Starting the test database at port $app_db_port"
-    export APP_DB_PORT="$app_db_port"
-    2>&1 docker-compose up --force-recreate --renew-anon-volumes db | while IFS= read -r line; do
-      if [[ "$line" == *"database system is ready to accept connections" ]]; then
-        echo "ready" > "$integration_tests_pipe"
-      fi
-    done &
-    unset APP_DB_PORT
-
-    cat "$integration_tests_pipe" >/dev/null
-
-    # --test '*' means only run the integration tests: https://github.com/rust-lang/cargo/issues/8396#issuecomment-713126649
-    echo "Starting the integration tests"
     cargo test --quiet --test '*'
   ;;
   *)
