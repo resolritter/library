@@ -1,8 +1,18 @@
 #!/bin/env bash
 
-set -eu -o pipefail
+set -Eeu -o pipefail
+shopt -s inherit_errexit
 
-root_dir="$(dirname $(realpath "$0"))"
+die() {
+  local exit_code=$?
+  >&2 echo "[error] $1"
+  if [ "$exit_code" -eq 0 ]; then
+    exit_code=1
+  fi
+  exit $?
+}
+
+root_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 data_dir="$root_dir/data"
 if [ ! -e "$data_dir" ]; then
@@ -65,17 +75,20 @@ unregister_taken_port() {
 
 get_available_port () {
   read -r lowest highest < /proc/sys/net/ipv4/ip_local_port_range
-  local taken_ports=($(ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }'))
+  local taken_ports
+  readarray -t taken_ports < <(
+    ss -lntu | tail -n +2 | awk '{ m=match($5, /([0-9]+)$/, ms); if (m) { print ms[1] } }'
+  )
 
-  while [ $lowest -le $highest ]; do
+  while [ "$lowest" -le "$highest" ]; do
     for tp in "${taken_ports[@]}"; do
-      if [ $lowest -eq $tp ]; then
+      if [ "$lowest" -eq "$tp" ]; then
         ((lowest++))
         continue 2
       fi
     done
 
-    if register_taken_port $lowest; then
+    if register_taken_port "$lowest"; then
       echo "$lowest"
       break
     fi
@@ -84,6 +97,21 @@ get_available_port () {
   done
 }
 
+case "$1" in
+  get_port)
+    get_available_port
+    exit $?
+  ;;
+  free_port)
+    unregister_taken_port "$2"
+    exit $?
+  ;;
+  test|test_server|server|db|integration_tests)
+    cmd="$1"
+  ;;
+esac
+
+run_server_extra_args=()
 while [ $# -gt 0 ]; do
   case "$1" in
     # options
@@ -91,27 +119,19 @@ while [ $# -gt 0 ]; do
     --instance) app_instance="$2"; shift ;;
     --dir) app_dir="$2"; shift;;
     --port) app_port="$2"; shift;;
+
     # forwarded arguments
     --listen|--admin-credentials-for-test|--signal-file)
-      printf -v arg_escaped %q "$2"
-      run_server_extra_args="${run_server_extra_args:-} $1=$arg_escaped"
+      run_server_extra_args+=("$1=$2")
       shift
     ;;
     --reset-before-run)
-      run_server_extra_args="${run_server_extra_args:-} $1"
+      run_server_extra_args+=("$1")
     ;;
-    # commands
-    get_port)
-      get_available_port
-      exit $?
+
+    *)
+      die "Unknown option $1"
     ;;
-    free_port)
-      unregister_taken_port $2
-      exit $?
-    ;;
-    test|test_server|server|db|integration_tests) cmd="$1";;
-    # fallthrough
-    *) echo "Unknown parameter: $1"; exit 1 ;;
   esac
   shift
 done
@@ -140,21 +160,25 @@ else
   app_db_port="${app_db_port:-5432}"
 fi
 
-mkdir -m 777 -p "$app_dir"
+mkdir -p "$app_dir"
 logging_deps () {
-  mkdir -m 777 -p "$log_dir"
+  mkdir -p "$log_dir"
 }
 db_deps () {
-  mkdir -m 777 -p "$app_db_dir"
+  mkdir -p "$app_db_dir"
 }
 
 run_server () {
   cd "$root_dir/server"
-  cargo run -- --db-try-limit=1 --db-try-delay=0 --db-url="postgresql://localhost:$app_db_port/$app_instance?user=$USER" $run_server_extra_args
+  cargo run -- \
+    --db-try-limit=1 \
+    --db-try-delay=0 \
+    --db-url="postgresql://localhost:$app_db_port/$app_instance?user=$USER" \
+    "${run_server_extra_args[@]}"
 }
 
 clean_test_server () {
-  unregister_taken_port $app_port
+  unregister_taken_port "$app_port"
   if [ -e "$app_dir" ]; then
     rm -r "$app_dir"
   fi
@@ -165,7 +189,7 @@ cleanup_test_db() {
   if [ -e "$test_db_port_file" ]; then
     read -r port < "$test_db_port_file"
     if [ "$port" ]; then
-      unregister_taken_port $port
+      unregister_taken_port "$port"
     fi
     rm "$test_db_port_file"
   fi
@@ -182,9 +206,8 @@ cleanup_integration_tests() {
 
 case "$cmd" in
   test_server)
-    trap clean_test_server EXIT HUP INT QUIT TERM
-    printf -v log_dir_escaped %q "$log_dir"
-    run_server_extra_args="--log-dir=$log_dir_escaped --log-format=test $run_server_extra_args"
+    trap clean_test_server EXIT
+    run_server_extra_args+=(--log-format=test "--log-dir=$log_dir")
     run_server
   ;;
   db)
@@ -197,7 +220,7 @@ case "$cmd" in
   integration_tests)
     cleanup_test_db
 
-    trap cleanup_integration_tests EXIT HUP INT QUIT TERM
+    trap cleanup_integration_tests EXIT
 
     integration_tests_pipe="$data_dir/integration_tests_pipe"
     if [ -e "$integration_tests_pipe" ]; then
@@ -219,9 +242,6 @@ case "$cmd" in
     unset APP_DB_PORT
 
     cat "$integration_tests_pipe" >/dev/null
-    if [ $? -ne 0 ]; then
-      exit $?
-    fi
 
     # --test '*' means only run the integration tests: https://github.com/rust-lang/cargo/issues/8396#issuecomment-713126649
     echo "Starting the integration tests"
